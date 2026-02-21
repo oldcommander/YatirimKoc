@@ -134,24 +134,29 @@ app.MapControllerRoute(
 
 await IdentitySeeder.SeedAsync(app.Services);
 
-// --- SEED DATA (Örnek Veri Yükleme) İŞLEMİ ---
+// --- SEED DATA VE OTOMATİK MİGRATİON İŞLEMİ ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<YatirimKoc.Infrastructure.Persistence.ApplicationDbContext>();
-        // Eğer identity seeder'ınız da varsa onu da burada çağırabilirsiniz.
+
+        // 1. EKSİK TABLOLARI VE MİGRATİONLARI OTOMATİK OLUŞTUR (Hatanın çözümü)
+        await context.Database.MigrateAsync();
+
+        // 2. KİMLİK (KULLANICI VE ROL) TOHUMLAMASI
+        // IdentitySeeder büyük ihtimalle doğrudan IServiceProvider bekliyor.
+        await YatirimKoc.Infrastructure.Persistence.Seed.IdentitySeeder.SeedAsync(services);
+
+        // 3. İLAN ÖZELLİKLERİ TOHUMLAMASI
         await YatirimKoc.Infrastructure.Persistence.Seed.ListingSeeder.SeedAsync(context);
     }
     catch (Exception ex)
     {
-        // Gerekirse loglama yapılabilir
-        Console.WriteLine("Seed işlemi sırasında hata oluştu: " + ex.Message);
+        Console.WriteLine("Veritabanı oluşturma veya Seed işlemi sırasında hata oluştu: " + ex.Message);
     }
 }
 // --------------------------------------------
-
-app.Run();
 
 app.Run();
