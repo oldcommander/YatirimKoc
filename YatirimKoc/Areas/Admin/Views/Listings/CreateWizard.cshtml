@@ -120,10 +120,10 @@
 
         <div class="step-content" data-step="4">
             <div class="form-group">
-                <label>Fotoğraflar</label>
+                <label>Fotoğraf ve Videolar <small class="text-warning" style="margin-left:10px; font-style:italic;">(İlk sıradaki görsel ilan kapak fotoğrafı olacaktır)</small></label>
                 <div class="upload-box" id="dropArea">
-                    <p>Dosyaları sürükle bırak veya tıkla</p>
-                    <input type="file" asp-for="Files" id="fileInput" multiple hidden />
+                    <p>Dosyaları sürükle bırak veya tıklayarak seç</p>
+                    <input type="file" asp-for="Files" id="fileInput" multiple hidden accept="image/*,video/*" />
                 </div>
                 <div id="previewArea" class="preview-area"></div>
             </div>
@@ -161,38 +161,39 @@
 
     <script>
         var validator;
-        var map;
-        var marker;
+                var map;
+                var marker;
 
-        $(function () {
-            // unobtrusive parse zorla
-            $.validator.unobtrusive.parse("#wizardForm");
-            validator = $("#wizardForm").data("validator");
+                $(function () {
+                    // unobtrusive parse zorla
+                    $.validator.unobtrusive.parse("#wizardForm");
+                    validator = $("#wizardForm").data("validator");
 
-            // --- ANKARA İLÇELERİNİ DOLDUR ---
-            const ankaraDistricts = [
-                "Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya", "Çubuk",
-                "Elmadağ", "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana", "Kahramankazan",
-                "Kalecik", "Keçiören", "Kızılcahamam", "Mamak", "Nallıhan", "Polatlı", "Pursaklar",
-                "Sincan", "Şereflikoçhisar", "Yenimahalle"
-            ];
-            const districtSelect = $("#DistrictSelect");
-            districtSelect.empty().append('<option value="">İlçe Seçiniz</option>');
-            ankaraDistricts.sort().forEach(d => {
-                districtSelect.append('<option value="' + d + '">' + d + '</option>');
-            });
+                    // --- ANKARA İLÇELERİNİ DOLDUR ---
+                    const ankaraDistricts = [
+                        "Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya", "Çubuk",
+                        "Elmadağ", "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana", "Kahramankazan",
+                        "Kalecik", "Keçiören", "Kızılcahamam", "Mamak", "Nallıhan", "Polatlı", "Pursaklar",
+                        "Sincan", "Şereflikoçhisar", "Yenimahalle"
+                    ];
+                    const districtSelect = $("#DistrictSelect");
+                    districtSelect.empty().append('<option value="">İlçe Seçiniz</option>');
+                    ankaraDistricts.sort().forEach(d => {
+                        districtSelect.append('<option value="' + d + '">' + d + '</option>');
+                    });
 
-            // ... (önceki dosya yükleme kodları ve dinamik özellik AJAX kodları burada aynen kalacak) ...
-
-            // preview image
+                   // --- DOSYA YÜKLEME, BİRİKTİRME VE ÖNİZLEME (YENİ SİSTEM) ---
             const dropArea = document.getElementById("dropArea");
             const fileInput = document.getElementById("fileInput");
             const previewArea = document.getElementById("previewArea");
 
+            // Üzerine yazmayı engellemek için dosyaları bu objede biriktiriyoruz
+            let dataTransfer = new DataTransfer();
+
             dropArea.addEventListener("click", () => fileInput.click());
 
             fileInput.addEventListener("change", function () {
-                handleFiles(this.files);
+                appendFiles(this.files);
             });
 
             dropArea.addEventListener("dragover", e => {
@@ -207,163 +208,269 @@
 
             dropArea.addEventListener("drop", e => {
                 e.preventDefault();
-                fileInput.files = e.dataTransfer.files;
-                handleFiles(e.dataTransfer.files);
+                dropArea.style.borderColor = "rgba(255,255,255,0.2)";
+                appendFiles(e.dataTransfer.files); // Sürüklenenleri ekle
             });
 
-            function handleFiles(files) {
+            // Gelen dosyaları listeye "ilave eden" fonksiyon
+            function appendFiles(files) {
+                for (let i = 0; i < files.length; i++) {
+                    dataTransfer.items.add(files[i]);
+                }
+                fileInput.files = dataTransfer.files; // Gerçek inputu günceller (Form submit için)
+                updatePreviews();
+            }
+
+            // Yanlışlıkla eklenen dosyayı listeden silen fonksiyon
+            window.removeFile = function(index) {
+                let newDt = new DataTransfer();
+                for (let i = 0; i < dataTransfer.files.length; i++) {
+                    if (i !== index) newDt.items.add(dataTransfer.files[i]); // Silinecek index hariç hepsini koru
+                }
+                dataTransfer = newDt;
+                fileInput.files = dataTransfer.files;
+                updatePreviews();
+            };
+
+            // Ekrana önizlemeleri çizen fonksiyon
+            function updatePreviews() {
                 previewArea.innerHTML = "";
-                [...files].forEach(file => {
+                const files = fileInput.files;
+
+                [...files].forEach((file, index) => {
                     const reader = new FileReader();
                     reader.onload = function (e) {
-                        const img = document.createElement("img");
-                        img.src = e.target.result;
-                        img.className = "preview-img";
-                        previewArea.appendChild(img);
+
+                        // Her bir medya elemanını kapsayacak kutu
+                        const wrapper = document.createElement("div");
+                        wrapper.style.position = "relative";
+                        wrapper.style.display = "inline-block";
+
+                        // Medya Tipi (Video mu, Resim mi?)
+                        let mediaElement;
+                        if(file.type.startsWith("video/")) {
+                            mediaElement = document.createElement("video");
+                            mediaElement.src = e.target.result;
+                            mediaElement.className = "preview-img";
+                            mediaElement.controls = true;
+                        } else {
+                            mediaElement = document.createElement("img");
+                            mediaElement.src = e.target.result;
+                            mediaElement.className = "preview-img";
+                        }
+
+                        // KAPAK FOTOĞRAFI VURGUSU (Sadece ilk sıradaki öğe)
+                        if(index === 0) {
+                            mediaElement.style.borderColor = "var(--accent-2)";
+                            mediaElement.style.borderWidth = "3px";
+
+                            const badge = document.createElement("div");
+                            badge.innerText = "Kapak Görseli";
+                            badge.style.position = "absolute";
+                            badge.style.bottom = "10px";
+                            badge.style.left = "50%";
+                            badge.style.transform = "translateX(-50%)";
+                            badge.style.backgroundColor = "var(--accent-2)";
+                            badge.style.color = "#000";
+                            badge.style.padding = "3px 8px";
+                            badge.style.borderRadius = "20px";
+                            badge.style.fontSize = "11px";
+                            badge.style.fontWeight = "bold";
+                            badge.style.zIndex = "10";
+                            badge.style.boxShadow = "0 2px 5px rgba(0,0,0,0.5)";
+                            wrapper.appendChild(badge);
+                        }
+
+                        // SİLME (X) BUTONU
+                        const removeBtn = document.createElement("div");
+                        removeBtn.innerHTML = "<i class='fa-solid fa-xmark'></i>";
+                        removeBtn.style.position = "absolute";
+                        removeBtn.style.top = "-8px";
+                        removeBtn.style.right = "-8px";
+                        removeBtn.style.backgroundColor = "#ef4444";
+                        removeBtn.style.color = "#fff";
+                        removeBtn.style.width = "24px";
+                        removeBtn.style.height = "24px";
+                        removeBtn.style.borderRadius = "50%";
+                        removeBtn.style.display = "flex";
+                        removeBtn.style.alignItems = "center";
+                        removeBtn.style.justifyContent = "center";
+                        removeBtn.style.cursor = "pointer";
+                        removeBtn.style.fontSize = "12px";
+                        removeBtn.style.zIndex = "10";
+                        removeBtn.style.boxShadow = "0 2px 5px rgba(0,0,0,0.4)";
+                        removeBtn.onclick = function() { removeFile(index); };
+
+                        wrapper.appendChild(mediaElement);
+                        wrapper.appendChild(removeBtn);
+                        previewArea.appendChild(wrapper);
                     }
                     reader.readAsDataURL(file);
                 });
             }
 
-            // DİNAMİK ÖZELLİKLER (AJAX)
-            $("#PropertyTypeId").on("change", function () {
-                var propertyTypeId = $(this).val();
-                var container = $("#dynamicFeaturesContainer");
+                    // --- DİNAMİK ÖZELLİKLER (AJAX) ---
+                    $("#PropertyTypeId").on("change", function () {
+                        var propertyTypeId = $(this).val();
+                        var container = $("#dynamicFeaturesContainer");
 
-                if (!propertyTypeId) {
-                    container.html('<p class="text-warning" style="grid-column: span 2;"><i>* Lütfen önce "Temel Bilgiler" adımından bir Emlak Tipi seçiniz.</i></p>');
-                    return;
+                        if (!propertyTypeId) {
+                            container.html('<p class="text-warning" style="grid-column: span 2;"><i>* Lütfen önce "Temel Bilgiler" adımından bir Emlak Tipi seçiniz.</i></p>');
+                            return;
+                        }
+
+                        container.html('<p class="text-muted" style="grid-column: span 2;">Özellikler yükleniyor...</p>');
+
+                        $.get("/Admin/Listings/GetFeatures?propertyTypeId=" + propertyTypeId, function (data) {
+                            container.empty();
+
+                            if (data.length === 0) {
+                                container.html('<p class="text-muted" style="grid-column: span 2;">Bu emlak tipine ait tanımlı ekstra özellik bulunmuyor.</p>');
+                                return;
+                            }
+
+                            data.forEach(function (feature) {
+                                var html = '<div class="form-group">';
+                                var reqMark = feature.isRequired ? ' <span class="text-danger">*</span>' : '';
+                                html += '<label>' + feature.name + reqMark + '</label>';
+
+                                var inputName = 'FeatureValues[' + feature.id + ']';
+                                var requiredAttr = feature.isRequired ? 'required="required"' : '';
+
+                                if (feature.inputType === "Select") {
+                                    html += '<select name="' + inputName + '" class="input-dark" ' + requiredAttr + '>';
+                                    html += '<option value="">Seçiniz</option>';
+                                    if (feature.options) {
+                                        var optionsArray = feature.options.split(',');
+                                        optionsArray.forEach(function(opt) {
+                                            html += '<option value="' + opt.trim() + '">' + opt.trim() + '</option>';
+                                        });
+                                    }
+                                    html += '</select>';
+                                }
+                                else if (feature.inputType === "Number") {
+                                    html += '<input type="number" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
+                                }
+                                else {
+                                    html += '<input type="text" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
+                                }
+
+                                html += '</div>';
+                                container.append(html);
+                            });
+
+                            // ÇÖZÜM BURADA: DOM'a yeni elemanlar eklendikten sonra Form Validator'ü baştan kuruyoruz!
+                            var form = $("#wizardForm");
+                            form.removeData("validator").removeData("unobtrusiveValidation");
+                            $.validator.unobtrusive.parse(form);
+                            validator = form.data("validator");
+
+                        }).fail(function() {
+                            container.html('<p class="text-danger" style="grid-column: span 2;">Özellikler yüklenirken bir hata oluştu.</p>');
+                        });
+                    });
+                });
+
+                // --- HARİTAYI BAŞLATMA FONKSİYONU ---
+                function initMap() {
+                    if (map) return;
+                    const defaultLat = 39.9334;
+                    const defaultLng = 32.8597;
+
+                    map = L.map('mapWrapper').setView([defaultLat, defaultLng], 11);
+
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap &copy; CARTO',
+                        subdomains: 'abcd',
+                        maxZoom: 20
+                    }).addTo(map);
+
+                    marker = L.marker([defaultLat, defaultLng]).addTo(map);
+                    $("#Latitude").val(defaultLat);
+                    $("#Longitude").val(defaultLng);
+
+                    map.on('click', function(e) {
+                        const lat = e.latlng.lat;
+                        const lng = e.latlng.lng;
+
+                        marker.setLatLng([lat, lng]);
+                        $("#Latitude").val(lat);
+                        $("#Longitude").val(lng);
+
+                        $("#coordDisplay").text(lat.toFixed(4) + ", " + lng.toFixed(4));
+                    });
                 }
 
-                container.html('<p class="text-muted" style="grid-column: span 2;">Özellikler yükleniyor...</p>');
+                // --- WIZARD İŞLEMLERİ VE GÜÇLENDİRİLMİŞ DOĞRULAMA ---
+                function nextStep(step) {
+                    if (!validateStep(step)) return;
+                    if(step === 4) updateSummary();
+                    changeStep(step, step + 1);
+                    markStepComplete(step);
+                }
 
-                $.get("/Admin/Listings/GetFeatures?propertyTypeId=" + propertyTypeId, function (data) {
-                    container.empty();
+                function prevStep(step) {
+                    changeStep(step, step - 1);
+                }
 
-                    if (data.length === 0) {
-                        container.html('<p class="text-muted" style="grid-column: span 2;">Bu emlak tipine ait tanımlı ekstra özellik bulunmuyor.</p>');
-                        return;
-                    }
+                function validateStep(step) {
+                    var currentSection = $(".step-content[data-step='" + step + "']");
+                    // Gizli(hidden) inputları dışla, form elemanlarını seç
+                    var inputs = currentSection.find("input:not([type=hidden]), select, textarea");
+                    var isValid = true;
 
-                    data.forEach(function (feature) {
-                        var html = '<div class="form-group">';
-                        var reqMark = feature.isRequired ? ' <span class="text-danger">*</span>' : '';
-                        html += '<label>' + feature.name + reqMark + '</label>';
+                    inputs.each(function() {
+                        var el = this;
 
-                        var inputName = 'FeatureValues[' + feature.id + ']';
-                        var requiredAttr = feature.isRequired ? 'required="required"' : '';
+                        // 1. Manuel (Native HTML5) Kontrol (AJAX ile gelenler için)
+                        if (el.hasAttribute('required') && !el.value) {
+                            isValid = false;
+                            $(el).css("border-color", "#f43f5e"); // Hata görseli (Kırmızı Çerçeve)
+                        } else {
+                            $(el).css("border-color", "rgba(255, 255, 255, 0.1)"); // Normal çerçeve
+                        }
 
-                        if (feature.inputType === "Select") {
-                            html += '<select name="' + inputName + '" class="input-dark" ' + requiredAttr + '>';
-                            html += '<option value="">Seçiniz</option>';
-                            if (feature.options) {
-                                var optionsArray = feature.options.split(',');
-                                optionsArray.forEach(function(opt) {
-                                    html += '<option value="' + opt.trim() + '">' + opt.trim() + '</option>';
-                                });
+                        // 2. jQuery Validation Kontrolü
+                        if (validator && $(el).attr('name')) {
+                            try {
+                                if (!validator.element(el)) {
+                                    isValid = false;
+                                }
+                            } catch(e) {
+                                // Doğrulayıcı elemanı tanımazsa çökmeyi engelle
                             }
-                            html += '</select>';
                         }
-                        else if (feature.inputType === "Number") {
-                            html += '<input type="number" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
-                        }
-                        else {
-                            html += '<input type="text" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
-                        }
-
-                        html += '</div>';
-                        container.append(html);
                     });
-                }).fail(function() {
-                    container.html('<p class="text-danger" style="grid-column: span 2;">Özellikler yüklenirken bir hata oluştu.</p>');
-                });
-            });
-        });
 
-        // --- HARİTAYI BAŞLATMA FONKSİYONU ---
-        function initMap() {
-            if (map) return; // Zaten yüklüyse tekrar yükleme
+                    return isValid;
+                }
 
-            // Ankara merkezi varsayılan koordinat
-            const defaultLat = 39.9334;
-            const defaultLng = 32.8597;
+                function changeStep(oldStep, newStep) {
+                    $(".step-content").removeClass("active");
+                    $(".step-content[data-step='" + newStep + "']").addClass("active");
 
-            // Haritayı oluştur (Dark Theme Katmanı ile)
-            map = L.map('mapWrapper').setView([defaultLat, defaultLng], 11);
+                    $(".step").removeClass("active");
+                    $(".step[data-step='" + newStep + "']").addClass("active");
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CARTO',
-                subdomains: 'abcd',
-                maxZoom: 20
-            }).addTo(map);
+                    if(newStep === 2) {
+                        setTimeout(function() {
+                            initMap();
+                            map.invalidateSize();
+                        }, 200);
+                    }
+                }
 
-            // Varsayılan Pin (Marker) Ekle
-            marker = L.marker([defaultLat, defaultLng]).addTo(map);
-            $("#Latitude").val(defaultLat);
-            $("#Longitude").val(defaultLng);
+                function markStepComplete(step) {
+                    $(".step[data-step='" + step + "']").addClass("completed");
+                }
 
-            // Haritaya tıklanınca pini taşı ve inputları güncelle
-            map.on('click', function(e) {
-                const lat = e.latlng.lat;
-                const lng = e.latlng.lng;
-
-                marker.setLatLng([lat, lng]);
-                $("#Latitude").val(lat);
-                $("#Longitude").val(lng);
-
-                // Sağ üstteki yazıyı güncelle
-                $("#coordDisplay").text(lat.toFixed(4) + ", " + lng.toFixed(4));
-            });
-        }
-
-        function nextStep(step) {
-            if (!validateStep(step)) return;
-            if(step === 4) updateSummary();
-            changeStep(step, step + 1);
-            markStepComplete(step);
-        }
-
-        function prevStep(step) {
-            changeStep(step, step - 1);
-        }
-
-        function validateStep(step) {
-            var currentSection = $(".step-content[data-step='" + step + "']");
-            var inputs = currentSection.find("input, select, textarea");
-            var isValid = true;
-            inputs.each(function() {
-                if (!validator.element(this)) isValid = false;
-            });
-            return isValid;
-        }
-
-        function changeStep(oldStep, newStep) {
-            $(".step-content").removeClass("active");
-            $(".step-content[data-step='" + newStep + "']").addClass("active");
-
-            $(".step").removeClass("active");
-            $(".step[data-step='" + newStep + "']").addClass("active");
-
-            // HARİTA ADIMINA (2) GEÇİLDİYSE HARİTAYI YÜKLE
-            if(newStep === 2) {
-                setTimeout(function() {
-                    initMap();
-                    map.invalidateSize(); // Gizli divden çıktığı için harita boyutunu güncellemesi şart
-                }, 200); // Animasyonun bitmesini bekle
-            }
-        }
-
-        function markStepComplete(step) {
-            $(".step[data-step='" + step + "']").addClass("completed");
-        }
-
-        function updateSummary() {
-            $("#summaryTitle").text($("#Title").val());
-            $("#summaryPrice").text($("#Price").val());
-            $("#summaryTransactionType").text($("#TransactionTypeId option:selected").text());
-            $("#summaryPropertyType").text($("#PropertyTypeId option:selected").text());
-            $("#summaryCity").text($("#CitySelect option:selected").text());
-            $("#summaryDistrict").text($("#DistrictSelect option:selected").text());
-        }
+                function updateSummary() {
+                    $("#summaryTitle").text($("#Title").val());
+                    $("#summaryPrice").text($("#Price").val());
+                    $("#summaryTransactionType").text($("#TransactionTypeId option:selected").text());
+                    $("#summaryPropertyType").text($("#PropertyTypeId option:selected").text());
+                    $("#summaryCity").text($("#CitySelect option:selected").text());
+                    $("#summaryDistrict").text($("#DistrictSelect option:selected").text());
+                }
     </script>
 }

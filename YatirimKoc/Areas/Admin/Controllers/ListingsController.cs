@@ -41,12 +41,20 @@ public class ListingsController : Controller
     [HttpPost]
     public async Task<IActionResult> CreateWizard(CreateListingWizardViewModel model)
     {
+        // 1. Doğrulama Kontrolü
         if (!ModelState.IsValid)
         {
+            // Eğer model hatalıysa sayfa yenilenir.
             ViewBag.TransactionTypes = await _transactionTypeRepository.GetAllAsync();
             ViewBag.PropertyTypes = await _propertyTypeRepository.GetAllAsync();
             return View(model);
         }
+
+        // 2. Giriş Yapan Kullanıcının ID'sini Al
+        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        Guid.TryParse(userIdString, out Guid userId);
+
+        // 3. Command (Komut) Nesnesini Doldur
         var command = new CreateListingCommand
         {
             Title = model.Title,
@@ -57,22 +65,24 @@ public class ListingsController : Controller
             TransactionTypeId = model.TransactionTypeId.Value,
             PropertyTypeId = model.PropertyTypeId.Value,
             IsPublished = model.IsPublished,
-
-            // KOORDİNATLARI EŞLEŞTİRİYORUZ (EKLENEN KISIM)
             Latitude = model.Latitude,
             Longitude = model.Longitude,
-
-            FeatureValues = model.FeatureValues
+            FeatureValues = model.FeatureValues,
+            UserId = userId // YENİ: Kullanıcı ID'si eklendi
         };
 
+        // 4. Dosyaları Sunucuya Yükle
         if (model.Files != null && model.Files.Any())
         {
-            var uploaded = await _fileUploadService.UploadAsync(model.Files, "listings");
-            command.ImageUrls = uploaded;
+            // İPUCU: Dosya servisi fiziksel klasör yoksa oluşturmalıdır.
+            var uploadedUrls = await _fileUploadService.UploadAsync(model.Files, "listings");
+            command.ImageUrls = uploadedUrls;
         }
 
+        // 5. Veritabanına Kaydet
         await _mediator.Send(command);
 
+        // 6. Başarılıysa Listeleme Sayfasına Yönlendir
         return RedirectToAction("Index");
     }
 

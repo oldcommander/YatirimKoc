@@ -3,6 +3,7 @@ using YatirimKoc.Domain.Entities.Listings;
 using System.Threading;
 using System.Threading.Tasks;
 using YatirimKoc.Domain.Entities.Settings;
+using YatirimKoc.Domain.Entities.Admin; // YENİ: AdminProfile için eklendi
 
 namespace YatirimKoc.Application.Abstractions.Persistence;
 
@@ -15,6 +16,9 @@ public interface IApplicationDbContext
     DbSet<PropertyFeature> PropertyFeatures { get; }
     DbSet<ListingFeatureValue> ListingFeatureValues { get; }
     DbSet<SiteSetting> SiteSettings { get; }
+
+    // YENİ EKLENEN KISIM:
+    DbSet<AdminProfile> AdminProfiles { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

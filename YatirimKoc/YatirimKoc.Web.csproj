@@ -21,4 +21,9 @@
     <ProjectReference Include="..\YatirimKoc.Infrastructure\YatirimKoc.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\listings\" />
+    <Folder Include="wwwroot\uploads\uploads\" />
+  </ItemGroup>
+
 </Project>
