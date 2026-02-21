@@ -10,6 +10,7 @@ namespace YatirimKoc.Application.Abstractions.Persistence;
 public interface IApplicationDbContext
 {
     DbSet<Listing> Listings { get; }
+    DbSet<ListingImage> ListingImages { get; }
     DbSet<TransactionType> TransactionTypes { get; }
     DbSet<PropertyType> PropertyTypes { get; }
     DbSet<Feature> Features { get; }

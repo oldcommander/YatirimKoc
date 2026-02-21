@@ -111,7 +111,9 @@
                         </td>
                         <td style="padding: 15px 20px; text-align:right;">
                             <div style="display:flex; justify-content:flex-end; gap:10px;">
-                                <a href="#" class="action-icon" title="Düzenle"><i class="fa-solid fa-pen-nib"></i></a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="action-icon" title="Güncelle" style="color:var(--accent-2);">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                </a>
                                 <a asp-action="Preview" asp-route-id="@item.Id" class="action-icon" title="Önizleme" style="color:var(--accent-2);">
                                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                 </a>

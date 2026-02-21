@@ -40,5 +40,34 @@ namespace YatirimKoc.Infrastructure.Services
 
             return uploadedPaths;
         }
+
+        // YENİ EKLENEN SİLME METODU
+        public Task<bool> DeleteAsync(string fileUrl)
+        {
+            if (string.IsNullOrWhiteSpace(fileUrl))
+                return Task.FromResult(false);
+
+            try
+            {
+                // URL'in başındaki '/' işaretini kaldırıp işletim sistemine uygun fiziksel yola çevirir.
+                // Örn: /uploads/listings/resim.jpg -> C:\inetpub\wwwroot\uploads\listings\resim.jpg
+                var relativePath = fileUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString());
+                var physicalPath = Path.Combine(_env.WebRootPath, relativePath);
+
+                // Dosya fiziksel olarak diskte varsa sil
+                if (File.Exists(physicalPath))
+                {
+                    File.Delete(physicalPath);
+                    return Task.FromResult(true);
+                }
+
+                return Task.FromResult(false);
+            }
+            catch
+            {
+                // Bir dosya başkası tarafından kullanılıyorsa vs. hata patlatmasın, silmeyi es geçsin
+                return Task.FromResult(false);
+            }
+        }
     }
 }

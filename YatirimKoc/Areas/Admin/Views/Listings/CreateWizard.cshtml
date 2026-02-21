@@ -372,34 +372,37 @@
                 });
 
                 // --- HARİTAYI BAŞLATMA FONKSİYONU ---
-                function initMap() {
-                    if (map) return;
-                    const defaultLat = 39.9334;
-                    const defaultLng = 32.8597;
+        function initMap() {
+            if (map) return;
+            const defaultLat = 39.9334;
+            const defaultLng = 32.8597;
 
-                    map = L.map('mapWrapper').setView([defaultLat, defaultLng], 11);
+            map = L.map('mapWrapper').setView([defaultLat, defaultLng], 11);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
 
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                        attribution: '&copy; OpenStreetMap &copy; CARTO',
-                        subdomains: 'abcd',
-                        maxZoom: 20
-                    }).addTo(map);
+            marker = L.marker([defaultLat, defaultLng]).addTo(map);
 
-                    marker = L.marker([defaultLat, defaultLng]).addTo(map);
-                    $("#Latitude").val(defaultLat);
-                    $("#Longitude").val(defaultLng);
+            // ÇÖZÜM 1: İlk yüklemede noktaları virgüle çevir
+            $("#Latitude").val(defaultLat.toString().replace('.', ','));
+            $("#Longitude").val(defaultLng.toString().replace('.', ','));
 
-                    map.on('click', function(e) {
-                        const lat = e.latlng.lat;
-                        const lng = e.latlng.lng;
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
 
-                        marker.setLatLng([lat, lng]);
-                        $("#Latitude").val(lat);
-                        $("#Longitude").val(lng);
+                marker.setLatLng([lat, lng]);
 
-                        $("#coordDisplay").text(lat.toFixed(4) + ", " + lng.toFixed(4));
-                    });
-                }
+                // ÇÖZÜM 2: Haritaya tıklandığında noktaları virgüle çevirerek inputa yaz
+                $("#Latitude").val(lat.toString().replace('.', ','));
+                $("#Longitude").val(lng.toString().replace('.', ','));
+
+                $("#coordDisplay").text(lat.toFixed(4) + ", " + lng.toFixed(4));
+            });
+        }
 
                 // --- WIZARD İŞLEMLERİ VE GÜÇLENDİRİLMİŞ DOĞRULAMA ---
                 function nextStep(step) {

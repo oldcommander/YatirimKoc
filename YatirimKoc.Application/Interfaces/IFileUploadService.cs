@@ -10,6 +10,8 @@ namespace YatirimKoc.Application.Interfaces
     public interface IFileUploadService
     {
         Task<List<string>> UploadAsync(List<IFormFile> files, string folderName);
+
+        Task<bool> DeleteAsync(string fileUrl);
     }
 
 }

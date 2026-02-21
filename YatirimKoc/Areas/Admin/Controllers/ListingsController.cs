@@ -130,4 +130,104 @@ public class ListingsController : Controller
 
         return View(listing);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            // 1. MediatR Command nesnesini oluştur
+            var command = new DeleteListingCommand { Id = id };
+
+            // 2. Handler'a gönder ve sonucu al
+            var result = await _mediator.Send(command);
+
+            // 3. Sonuca göre JSON dön (AJAX tarafındaki JavaScript bu yanıta göre progress bar'ı dolduracak)
+            if (result)
+            {
+                return Json(new { success = true, message = "İlan başarıyla silindi." });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Silinmek istenen ilan bulunamadı veya zaten silinmiş." });
+            }
+        }
+        catch (Exception ex)
+        {
+            // Beklenmedik bir hata (Örn: Veritabanı bağlantı sorunu) olursa AJAX'a bildir
+            return Json(new { success = false, message = "Silme işlemi sırasında bir hata oluştu: " + ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(Guid id)
+    {
+        // İlanı tüm ilişkileriyle (özellikler, resimler) çekiyoruz
+        var listing = await _mediator.Send(new GetListingDetailQuery { Id = id });
+        if (listing == null) return NotFound();
+
+        // View'a gidecek modeli dolduruyoruz
+        var model = new UpdateListingViewModel
+        {
+            Id = listing.Id,
+            Title = listing.Title,
+            Description = listing.Description,
+            Price = listing.Price,
+            City = listing.City,
+            District = listing.District,
+            TransactionTypeId = listing.TransactionTypeId,
+            PropertyTypeId = listing.PropertyTypeId,
+            IsPublished = listing.IsPublished,
+            Latitude = listing.Latitude,
+            Longitude = listing.Longitude,
+            ExistingImages = listing.Images.ToList(),
+
+            // Veritabanındaki özellikleri Dictionary'e çeviriyoruz ki JS ile kolayca eşleştirelim
+            FeatureValues = listing.FeatureValues.ToDictionary(x => x.FeatureId, x => x.Value)
+        };
+
+        ViewBag.TransactionTypes = await _transactionTypeRepository.GetAllAsync();
+        ViewBag.PropertyTypes = await _propertyTypeRepository.GetAllAsync();
+
+        return View(model);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Edit(UpdateListingViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.TransactionTypes = await _transactionTypeRepository.GetAllAsync();
+            ViewBag.PropertyTypes = await _propertyTypeRepository.GetAllAsync();
+            return View(model);
+        }
+
+        var command = new UpdateListingCommand
+        {
+            Id = model.Id,
+            Title = model.Title,
+            Description = model.Description ?? "",
+            Price = model.Price,
+            City = model.City,
+            District = model.District,
+            TransactionTypeId = model.TransactionTypeId,
+            PropertyTypeId = model.PropertyTypeId,
+            IsPublished = model.IsPublished,
+            Latitude = model.Latitude,
+            Longitude = model.Longitude,
+            FeatureValues = model.FeatureValues,
+            DeletedImageIds = model.DeletedImageIds ?? new List<Guid>()
+        };
+
+        // Eğer yeni dosya eklendiyse sunucuya yükle ve URL'lerini Command'a ver
+        if (model.NewFiles != null && model.NewFiles.Any())
+        {
+            command.NewImageUrls = await _fileUploadService.UploadAsync(model.NewFiles, "listings");
+        }
+
+        await _mediator.Send(command);
+
+        // Başarılı olursa listeye dön
+        return RedirectToAction("Index");
+    }
 }
