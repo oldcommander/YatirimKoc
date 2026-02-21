@@ -85,11 +85,28 @@ public class ListingsController : Controller
         // 6. Başarılıysa Listeleme Sayfasına Yönlendir
         return RedirectToAction("Index");
     }
-
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string searchTerm, Guid? transactionTypeId, Guid? propertyTypeId, int pageNumber = 1)
     {
-        var listings = await _mediator.Send(new GetAllListingsQuery());
-        return View(listings);
+        var query = new GetAllListingsQuery
+        {
+            SearchTerm = searchTerm,
+            TransactionTypeId = transactionTypeId,
+            PropertyTypeId = propertyTypeId,
+            PageNumber = pageNumber,
+            PageSize = 10
+        };
+
+        var result = await _mediator.Send(query);
+
+        ViewBag.TransactionTypes = await _transactionTypeRepository.GetAllAsync();
+        ViewBag.PropertyTypes = await _propertyTypeRepository.GetAllAsync();
+
+        // Filtreleme değerlerini View'da tutmak için
+        ViewData["CurrentSearch"] = searchTerm;
+        ViewData["CurrentTrans"] = transactionTypeId;
+        ViewData["CurrentProp"] = propertyTypeId;
+
+        return View(result);
     }
 
     // DİNAMİK ÖZELLİK ÇEKME (AJAX ENDPOINT)
@@ -102,5 +119,15 @@ public class ListingsController : Controller
         var features = await _mediator.Send(query);
 
         return Json(features);
+    }
+
+    public async Task<IActionResult> Preview(Guid id)
+    {
+        var query = new GetListingDetailQuery { Id = id };
+        var listing = await _mediator.Send(query);
+
+        if (listing == null) return NotFound();
+
+        return View(listing);
     }
 }
