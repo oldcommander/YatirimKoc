@@ -28,4 +28,7 @@ public class CreateListingWizardViewModel
     public bool IsPublished { get; set; }
 
     public List<IFormFile>? Files { get; set; }
+
+    // Formdan name="FeatureValues[GUID]" şeklinde gelen verileri otomatik yakalar
+    public Dictionary<Guid, string>? FeatureValues { get; set; }
 }

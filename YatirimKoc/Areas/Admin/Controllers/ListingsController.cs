@@ -76,4 +76,16 @@ public class ListingsController : Controller
         var listings = await _mediator.Send(new GetAllListingsQuery());
         return View(listings);
     }
+
+    // DİNAMİK ÖZELLİK ÇEKME (AJAX ENDPOINT)
+    [HttpGet]
+    public async Task<IActionResult> GetFeatures(Guid propertyTypeId)
+    {
+        if (propertyTypeId == Guid.Empty) return Json(new List<FeatureDto>());
+
+        var query = new GetFeaturesByPropertyTypeQuery { PropertyTypeId = propertyTypeId };
+        var features = await _mediator.Send(query);
+
+        return Json(features);
+    }
 }

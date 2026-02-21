@@ -52,6 +52,22 @@ public class CreateListingCommandHandler : IRequestHandler<CreateListingCommand,
             }
         }
 
+        // DİNAMİK ÖZELLİKLERİ İLANA EKLE
+        if (request.FeatureValues != null && request.FeatureValues.Any())
+        {
+            foreach (var feature in request.FeatureValues)
+            {
+                // Boş gönderilmeyen alanları kaydet
+                if (!string.IsNullOrWhiteSpace(feature.Value))
+                {
+                    listing.FeatureValues.Add(new ListingFeatureValue
+                    {
+                        FeatureId = feature.Key,
+                        Value = feature.Value
+                    });
+                }
+            }
+        }
         _context.Listings.Add(listing);
         await _context.SaveChangesAsync(cancellationToken);
 

@@ -82,14 +82,18 @@
         <div class="step-content" data-step="3">
             <div class="form-grid">
 
-                <div class="form-group" style="grid-column: span 2;">
-                    <p class="text-warning"><i>* Bu ekrandaki detaylı özellikler (Oda Sayısı, İmar Durumu vs.), "Temel Bilgiler" adımında seçtiğiniz <b>Emlak Tipi</b>'ne göre dinamik olarak yüklenecektir. (AJAX Entegrasyonu Bekleniyor)</i></p>
+                <div id="dynamicFeaturesContainer" style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <p class="text-warning"><i>* Lütfen önce "Temel Bilgiler" adımından bir <b>Emlak Tipi</b> seçiniz. Özellikler seçiminize göre buraya yüklenecektir.</i></p>
                 </div>
 
-                <div class="form-group">
-                    <label asp-for="IsPublished">Yayında mı?</label>
-                    <input asp-for="IsPublished" type="checkbox" />
+                <div class="form-group" style="grid-column: span 2; margin-top:20px;">
+                    <hr style="border-color: rgba(255,255,255,0.1);" />
+                    <label class="d-flex align-items-center mt-3">
+                        <input asp-for="IsPublished" type="checkbox" style="width:20px; height:20px; margin-right:10px;" />
+                        Bu ilanı anında yayına al (Taslak olarak kalmasın)
+                    </label>
                 </div>
+
             </div>
 
             <div class="wizard-buttons">
@@ -183,8 +187,73 @@
                     reader.readAsDataURL(file);
                 });
             }
-        });
 
+            // ==========================================
+            // DİNAMİK ÖZELLİKLER (AJAX İLE VERİ ÇEKME)
+            // ==========================================
+            $("#PropertyTypeId").on("change", function () {
+                var propertyTypeId = $(this).val();
+                var container = $("#dynamicFeaturesContainer");
+
+                // Seçim yapılmadıysa temizle
+                if (!propertyTypeId) {
+                    container.html('<p class="text-warning" style="grid-column: span 2;"><i>* Lütfen önce "Temel Bilgiler" adımından bir Emlak Tipi seçiniz.</i></p>');
+                    return;
+                }
+
+                container.html('<p class="text-muted" style="grid-column: span 2;">Özellikler yükleniyor...</p>');
+
+                // API'den özellikleri çek (AJAX)
+                $.get("/Admin/Listings/GetFeatures?propertyTypeId=" + propertyTypeId, function (data) {
+                    container.empty();
+
+                    if (data.length === 0) {
+                        container.html('<p class="text-muted" style="grid-column: span 2;">Bu emlak tipine ait tanımlı ekstra özellik bulunmuyor.</p>');
+                        return;
+                    }
+
+                    // Gelen her bir özellik için HTML oluştur
+                    data.forEach(function (feature) {
+                        var html = '<div class="form-group">';
+                        var reqMark = feature.isRequired ? ' <span class="text-danger">*</span>' : '';
+                        html += '<label>' + feature.name + reqMark + '</label>';
+
+                        // Dictionary model binding yapısı: name="FeatureValues[GUID]"
+                        var inputName = 'FeatureValues[' + feature.id + ']';
+                        var requiredAttr = feature.isRequired ? 'required="required"' : '';
+
+                        if (feature.inputType === "Select") {
+                            // Dropdown (Virgülle ayrılmış seçenekleri böl)
+                            html += '<select name="' + inputName + '" class="input-dark" ' + requiredAttr + '>';
+                            html += '<option value="">Seçiniz</option>';
+                            if (feature.options) {
+                                var optionsArray = feature.options.split(',');
+                                optionsArray.forEach(function(opt) {
+                                    html += '<option value="' + opt.trim() + '">' + opt.trim() + '</option>';
+                                });
+                            }
+                            html += '</select>';
+                        }
+                        else if (feature.inputType === "Number") {
+                            html += '<input type="number" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
+                        }
+                        else {
+                            // Text veya varsayılan
+                            html += '<input type="text" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
+                        }
+
+                        html += '</div>';
+                        container.append(html);
+                    });
+                }).fail(function() {
+                    container.html('<p class="text-danger" style="grid-column: span 2;">Özellikler yüklenirken bir hata oluştu.</p>');
+                });
+            });
+        }); // END $(function() {...})
+
+        // ==========================================
+        // WIZARD ADIM İŞLEMLERİ (MEVCUT KODLARIN)
+        // ==========================================
         function nextStep(step) {
             if (!validateStep(step)) return;
             if(step === 4) updateSummary();

@@ -36,4 +36,7 @@ public class CreateListingCommand : IRequest<Guid>
     public double Longitude { get; set; }
 
     public List<string>? ImageUrls { get; set; }
+
+    // DİNAMİK ÖZELLİKLER İÇİN:
+    public Dictionary<Guid, string>? FeatureValues { get; set; }
 }

@@ -134,4 +134,24 @@ app.MapControllerRoute(
 
 await IdentitySeeder.SeedAsync(app.Services);
 
+// --- SEED DATA (Örnek Veri Yükleme) İŞLEMİ ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<YatirimKoc.Infrastructure.Persistence.ApplicationDbContext>();
+        // Eğer identity seeder'ınız da varsa onu da burada çağırabilirsiniz.
+        await YatirimKoc.Infrastructure.Persistence.Seed.ListingSeeder.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        // Gerekirse loglama yapılabilir
+        Console.WriteLine("Seed işlemi sırasında hata oluştu: " + ex.Message);
+    }
+}
+// --------------------------------------------
+
+app.Run();
+
 app.Run();
