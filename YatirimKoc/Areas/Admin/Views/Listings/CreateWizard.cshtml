@@ -62,14 +62,30 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label asp-for="City">Şehir</label>
-                    <input asp-for="City" class="input-dark" />
+                    <select asp-for="City" class="input-dark" id="CitySelect">
+                        <option value="Ankara" selected>Ankara</option>
+                    </select>
                     <span asp-validation-for="City" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
                     <label asp-for="District">İlçe</label>
-                    <input asp-for="District" class="input-dark" />
+                    <select asp-for="District" class="input-dark" id="DistrictSelect">
+                        <option value="">Önce Seçiniz...</option>
+                    </select>
                     <span asp-validation-for="District" class="text-danger"></span>
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                    <label style="display:flex; justify-content:space-between;">
+                        <span>Harita Konumu (İşaretlemek için tıklayın)</span>
+                        <span id="coordDisplay" style="color:var(--accent-2); font-size:12px;">39.9334, 32.8597</span>
+                    </label>
+
+                    <div id="mapWrapper" style="height: 350px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-border); background:rgba(0,0,0,0.3); z-index: 1;"></div>
+
+                    <input type="hidden" asp-for="Latitude" id="Latitude" />
+                    <input type="hidden" asp-for="Longitude" id="Longitude" />
                 </div>
             </div>
 
@@ -140,12 +156,33 @@
 </div>
 
 @section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
         var validator;
+        var map;
+        var marker;
+
         $(function () {
             // unobtrusive parse zorla
             $.validator.unobtrusive.parse("#wizardForm");
             validator = $("#wizardForm").data("validator");
+
+            // --- ANKARA İLÇELERİNİ DOLDUR ---
+            const ankaraDistricts = [
+                "Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya", "Çubuk",
+                "Elmadağ", "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana", "Kahramankazan",
+                "Kalecik", "Keçiören", "Kızılcahamam", "Mamak", "Nallıhan", "Polatlı", "Pursaklar",
+                "Sincan", "Şereflikoçhisar", "Yenimahalle"
+            ];
+            const districtSelect = $("#DistrictSelect");
+            districtSelect.empty().append('<option value="">İlçe Seçiniz</option>');
+            ankaraDistricts.sort().forEach(d => {
+                districtSelect.append('<option value="' + d + '">' + d + '</option>');
+            });
+
+            // ... (önceki dosya yükleme kodları ve dinamik özellik AJAX kodları burada aynen kalacak) ...
 
             // preview image
             const dropArea = document.getElementById("dropArea");
@@ -188,14 +225,11 @@
                 });
             }
 
-            // ==========================================
-            // DİNAMİK ÖZELLİKLER (AJAX İLE VERİ ÇEKME)
-            // ==========================================
+            // DİNAMİK ÖZELLİKLER (AJAX)
             $("#PropertyTypeId").on("change", function () {
                 var propertyTypeId = $(this).val();
                 var container = $("#dynamicFeaturesContainer");
 
-                // Seçim yapılmadıysa temizle
                 if (!propertyTypeId) {
                     container.html('<p class="text-warning" style="grid-column: span 2;"><i>* Lütfen önce "Temel Bilgiler" adımından bir Emlak Tipi seçiniz.</i></p>');
                     return;
@@ -203,7 +237,6 @@
 
                 container.html('<p class="text-muted" style="grid-column: span 2;">Özellikler yükleniyor...</p>');
 
-                // API'den özellikleri çek (AJAX)
                 $.get("/Admin/Listings/GetFeatures?propertyTypeId=" + propertyTypeId, function (data) {
                     container.empty();
 
@@ -212,18 +245,15 @@
                         return;
                     }
 
-                    // Gelen her bir özellik için HTML oluştur
                     data.forEach(function (feature) {
                         var html = '<div class="form-group">';
                         var reqMark = feature.isRequired ? ' <span class="text-danger">*</span>' : '';
                         html += '<label>' + feature.name + reqMark + '</label>';
 
-                        // Dictionary model binding yapısı: name="FeatureValues[GUID]"
                         var inputName = 'FeatureValues[' + feature.id + ']';
                         var requiredAttr = feature.isRequired ? 'required="required"' : '';
 
                         if (feature.inputType === "Select") {
-                            // Dropdown (Virgülle ayrılmış seçenekleri böl)
                             html += '<select name="' + inputName + '" class="input-dark" ' + requiredAttr + '>';
                             html += '<option value="">Seçiniz</option>';
                             if (feature.options) {
@@ -238,7 +268,6 @@
                             html += '<input type="number" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
                         }
                         else {
-                            // Text veya varsayılan
                             html += '<input type="text" name="' + inputName + '" class="input-dark" ' + requiredAttr + ' />';
                         }
 
@@ -249,11 +278,44 @@
                     container.html('<p class="text-danger" style="grid-column: span 2;">Özellikler yüklenirken bir hata oluştu.</p>');
                 });
             });
-        }); // END $(function() {...})
+        });
 
-        // ==========================================
-        // WIZARD ADIM İŞLEMLERİ (MEVCUT KODLARIN)
-        // ==========================================
+        // --- HARİTAYI BAŞLATMA FONKSİYONU ---
+        function initMap() {
+            if (map) return; // Zaten yüklüyse tekrar yükleme
+
+            // Ankara merkezi varsayılan koordinat
+            const defaultLat = 39.9334;
+            const defaultLng = 32.8597;
+
+            // Haritayı oluştur (Dark Theme Katmanı ile)
+            map = L.map('mapWrapper').setView([defaultLat, defaultLng], 11);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+
+            // Varsayılan Pin (Marker) Ekle
+            marker = L.marker([defaultLat, defaultLng]).addTo(map);
+            $("#Latitude").val(defaultLat);
+            $("#Longitude").val(defaultLng);
+
+            // Haritaya tıklanınca pini taşı ve inputları güncelle
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                marker.setLatLng([lat, lng]);
+                $("#Latitude").val(lat);
+                $("#Longitude").val(lng);
+
+                // Sağ üstteki yazıyı güncelle
+                $("#coordDisplay").text(lat.toFixed(4) + ", " + lng.toFixed(4));
+            });
+        }
+
         function nextStep(step) {
             if (!validateStep(step)) return;
             if(step === 4) updateSummary();
@@ -281,6 +343,14 @@
 
             $(".step").removeClass("active");
             $(".step[data-step='" + newStep + "']").addClass("active");
+
+            // HARİTA ADIMINA (2) GEÇİLDİYSE HARİTAYI YÜKLE
+            if(newStep === 2) {
+                setTimeout(function() {
+                    initMap();
+                    map.invalidateSize(); // Gizli divden çıktığı için harita boyutunu güncellemesi şart
+                }, 200); // Animasyonun bitmesini bekle
+            }
         }
 
         function markStepComplete(step) {
@@ -292,8 +362,8 @@
             $("#summaryPrice").text($("#Price").val());
             $("#summaryTransactionType").text($("#TransactionTypeId option:selected").text());
             $("#summaryPropertyType").text($("#PropertyTypeId option:selected").text());
-            $("#summaryCity").text($("#City").val());
-            $("#summaryDistrict").text($("#District").val());
+            $("#summaryCity").text($("#CitySelect option:selected").text());
+            $("#summaryDistrict").text($("#DistrictSelect option:selected").text());
         }
     </script>
 }

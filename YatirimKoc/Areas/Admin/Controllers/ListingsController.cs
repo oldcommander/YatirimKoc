@@ -47,7 +47,6 @@ public class ListingsController : Controller
             ViewBag.PropertyTypes = await _propertyTypeRepository.GetAllAsync();
             return View(model);
         }
-
         var command = new CreateListingCommand
         {
             Title = model.Title,
@@ -57,7 +56,13 @@ public class ListingsController : Controller
             District = model.District,
             TransactionTypeId = model.TransactionTypeId.Value,
             PropertyTypeId = model.PropertyTypeId.Value,
-            IsPublished = model.IsPublished
+            IsPublished = model.IsPublished,
+
+            // KOORDİNATLARI EŞLEŞTİRİYORUZ (EKLENEN KISIM)
+            Latitude = model.Latitude,
+            Longitude = model.Longitude,
+
+            FeatureValues = model.FeatureValues
         };
 
         if (model.Files != null && model.Files.Any())

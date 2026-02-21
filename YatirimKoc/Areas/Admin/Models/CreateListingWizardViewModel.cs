@@ -27,6 +27,10 @@ public class CreateListingWizardViewModel
 
     public bool IsPublished { get; set; }
 
+    // HARİTA KOORDİNATLARI (EKLENEN KISIM)
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+
     public List<IFormFile>? Files { get; set; }
 
     // Formdan name="FeatureValues[GUID]" şeklinde gelen verileri otomatik yakalar
