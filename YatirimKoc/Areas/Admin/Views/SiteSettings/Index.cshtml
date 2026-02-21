@@ -1,0 +1,22 @@
+﻿@model YatirimKoc.Application.Features.SiteSettings.Dtos.SiteSettingsDto
+
+<form asp-action="Update" method="post">
+    @Html.AntiForgeryToken()
+
+    <div>
+        <label>Site Adı</label>
+        <input asp-for="SiteName" />
+    </div>
+
+    <div>
+        <label>Logo Url</label>
+        <input asp-for="LogoUrl" />
+    </div>
+
+    <div>
+        <label>Bakım Modu</label>
+        <input asp-for="MaintenanceMode" type="checkbox" />
+    </div>
+
+    <button type="submit">Kaydet</button>
+</form>

@@ -1,0 +1,219 @@
+﻿@using YatirimKoc.Domain.Entities.Identity
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<User> UserManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var roles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var roleName = roles.FirstOrDefault() ?? "Admin";
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - YatırımKoç Yönetim Paneli</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+    <div class="app">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="brand">
+                <div class="logo">YK</div>
+                <div class="title">YatırımKoç</div>
+            </div>
+
+            <ul class="nav">
+
+                <li>
+                    <a href="/admin/dashboard">
+                        <span class="icon"><i class="fa fa-house-chimney"></i></span>
+                        <span class="label">Genel Bakış</span>
+                    </a>
+                </li>
+
+                <li class="has-children">
+                    <a href="#">
+                        <span class="icon"><i class="fa fa-users"></i></span>
+                        <span class="label">Kullanıcılar</span>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="/admin/user/index">Tüm Kullanıcılar</a></li>
+                        <li><a href="/admin/user/create">Yeni Kullanıcı</a></li>
+                    </ul>
+                </li>
+
+                <li class="has-children">
+                    <a href="#">
+                        <span class="icon"><i class="fa fa-building"></i></span>
+                        <span class="label">İlanlar</span>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="/admin/listings">Tüm İlanlar</a></li>
+                        <li><a href="/admin/listings/create">Yeni İlan</a></li>
+                    </ul>
+                </li>
+
+                <li class="has-children">
+                    <a href="#">
+                        <span class="icon"><i class="fa fa-cog"></i></span>
+                        <span class="label">Ayarlar</span>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="/admin/sitesettings">Site Ayarları</a></li>
+                    </ul>
+                </li>
+
+            </ul>
+        </nav>
+
+        <!-- MAIN -->
+        <main class="main">
+            <header class="topbar">
+
+                <div class="left">
+                    <button class="hamburger"><i class="fa fa-bars"></i></button>
+                    <div class="searchwide">
+                        <b>Yönetim Paneli</b>
+                        <p> - Hoşgeldin, @currentUser?.FirstName @currentUser?.LastName</p>
+                    </div>
+                </div>
+
+                <div class="right">
+
+                    <!-- Logout -->
+                    <button class="icon-btn" id="logoutBtn">
+                        <i class="fa fa-sign-out" style="color:white;"></i>
+                    </button>
+
+                    <div id="logoutModal" class="modal-overlay" style="display:none;">
+                        <div class="modal-box">
+                            <h3 style="color:#f87171;">
+                                <i class="fa fa-triangle-exclamation"></i> Çıkış Yap
+                            </h3>
+                            <p>Oturumu kapatmak istediğinize emin misiniz?</p>
+
+                            <div style="display:flex;justify-content:flex-end;gap:10px;">
+                                <button id="cancelLogoutBtn">Vazgeç</button>
+
+                                <form method="post" asp-controller="Login" asp-action="Logout">
+                                    <button type="submit">Evet, Çıkış Yap</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div style="text-align:right">
+                            <div style="font-weight:700">@currentUser?.FirstName @currentUser?.LastName</div>
+                            <div style="font-size:12px;color:gray">@roleName</div>
+                        </div>
+
+                        <div style="width:44px;height:44px;border-radius:10px;overflow:hidden;">
+                            @if (!string.IsNullOrEmpty(currentUser?.AdminProfile?.ProfileImageUrl))
+                            {
+                                <img src="@currentUser.AdminProfile.ProfileImageUrl"
+                                     style="width:100%;height:100%;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <i class="fa fa-user"></i>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </header>
+
+            <div class="content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <button id="scrollTopBtn">
+        <i class="fa fa-arrow-up"></i>
+    </button>
+
+    <!-- WORKING SIDEBAR JS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.hamburger');
+            const collapseBreakpoint = 700;
+
+            // Hamburger
+            hamburger.addEventListener('click', () => {
+                if (window.innerWidth <= collapseBreakpoint) {
+                    sidebar.classList.toggle('open');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                }
+            });
+
+            // Submenu toggle
+            document.querySelectorAll('.has-children > a').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const parent = this.parentElement;
+
+                    document.querySelectorAll('.has-children').forEach(item => {
+                        if (item !== parent) item.classList.remove('expanded');
+                    });
+
+                    parent.classList.toggle('expanded');
+                });
+            });
+
+            // Scroll top
+            const scrollBtn = document.getElementById("scrollTopBtn");
+
+            window.addEventListener("scroll", () => {
+                if (window.scrollY > 200) {
+                    scrollBtn.classList.add("show");
+                } else {
+                    scrollBtn.classList.remove("show");
+                }
+            });
+
+            scrollBtn.addEventListener("click", () => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // Logout modal
+            const logoutBtn = document.getElementById('logoutBtn');
+            const logoutModal = document.getElementById('logoutModal');
+            const cancelLogout = document.getElementById('cancelLogoutBtn');
+
+            logoutBtn.addEventListener('click', () => logoutModal.style.display = 'flex');
+            cancelLogout.addEventListener('click', () => logoutModal.style.display = 'none');
+            logoutModal.addEventListener('click', (e) => {
+                if (e.target === logoutModal) logoutModal.style.display = 'none';
+            });
+
+        });
+    </script>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

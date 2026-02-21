@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YatirimKoc.Web", "YatirimKoc\YatirimKoc.Web.csproj", "{166C6FF4-7646-436F-9B0E-65F360C1ADCC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0392D995-3D55-4EB1-B736-2CA4AFCF0013} = {0392D995-3D55-4EB1-B736-2CA4AFCF0013}
+		{99E7AD4A-7D4A-487A-8DFA-068FB908D84B} = {99E7AD4A-7D4A-487A-8DFA-068FB908D84B}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YatirimKoc.Domain", "YatirimKoc.Domain\YatirimKoc.Domain.csproj", "{2DC37121-87F8-42F3-AFCC-C991D83CB78A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YatirimKoc.Application", "YatirimKoc.Application\YatirimKoc.Application.csproj", "{0392D995-3D55-4EB1-B736-2CA4AFCF0013}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2DC37121-87F8-42F3-AFCC-C991D83CB78A} = {2DC37121-87F8-42F3-AFCC-C991D83CB78A}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YatirimKoc.Infrastructure", "YatirimKoc.Infrastructure\YatirimKoc.Infrastructure.csproj", "{99E7AD4A-7D4A-487A-8DFA-068FB908D84B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0392D995-3D55-4EB1-B736-2CA4AFCF0013} = {0392D995-3D55-4EB1-B736-2CA4AFCF0013}
+		{2DC37121-87F8-42F3-AFCC-C991D83CB78A} = {2DC37121-87F8-42F3-AFCC-C991D83CB78A}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{166C6FF4-7646-436F-9B0E-65F360C1ADCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{166C6FF4-7646-436F-9B0E-65F360C1ADCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{166C6FF4-7646-436F-9B0E-65F360C1ADCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{166C6FF4-7646-436F-9B0E-65F360C1ADCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DC37121-87F8-42F3-AFCC-C991D83CB78A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DC37121-87F8-42F3-AFCC-C991D83CB78A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DC37121-87F8-42F3-AFCC-C991D83CB78A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DC37121-87F8-42F3-AFCC-C991D83CB78A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0392D995-3D55-4EB1-B736-2CA4AFCF0013}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0392D995-3D55-4EB1-B736-2CA4AFCF0013}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0392D995-3D55-4EB1-B736-2CA4AFCF0013}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0392D995-3D55-4EB1-B736-2CA4AFCF0013}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99E7AD4A-7D4A-487A-8DFA-068FB908D84B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99E7AD4A-7D4A-487A-8DFA-068FB908D84B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99E7AD4A-7D4A-487A-8DFA-068FB908D84B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99E7AD4A-7D4A-487A-8DFA-068FB908D84B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D66F283-4610-4CED-95A7-8DB43193C409}
+	EndGlobalSection
+EndGlobal
