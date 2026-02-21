@@ -52,8 +52,11 @@ public class ApplicationDbContext
     // LISTINGS
     // --------------------
     public DbSet<Listing> Listings => Set<Listing>();
-    public DbSet<ListingType> ListingTypes => Set<ListingType>();
-    public DbSet<ListingCategory> ListingCategories => Set<ListingCategory>();
+    public DbSet<TransactionType> TransactionTypes { get; set; }
+    public DbSet<PropertyType> PropertyTypes { get; set; }
+    public DbSet<Feature> Features { get; set; }
+    public DbSet<PropertyFeature> PropertyFeatures { get; set; }
+    public DbSet<ListingFeatureValue> ListingFeatureValues { get; set; }
 
     public DbSet<ListingImage> ListingImages => Set<ListingImage>();
 

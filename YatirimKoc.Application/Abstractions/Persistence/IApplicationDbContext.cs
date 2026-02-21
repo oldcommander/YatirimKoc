@@ -44,9 +44,15 @@ public interface IApplicationDbContext
     // --------------------
     // LISTINGS
     // --------------------
-    DbSet<Listing> Listings { get; }
-    DbSet<ListingType> ListingTypes { get; }
-    DbSet<ListingCategory> ListingCategories { get; }
+    // --------------------
+    // LISTINGS & DYNAMIC FEATURES
+    // --------------------
+    DbSet<Listing> Listings{get; }
+    DbSet<TransactionType> TransactionTypes { get; }
+    DbSet<PropertyType> PropertyTypes { get; }
+    DbSet<Feature> Features { get; }
+    DbSet<PropertyFeature> PropertyFeatures { get; }
+    DbSet<ListingFeatureValue> ListingFeatureValues { get; }
 
     // --------------------
     // SAVE

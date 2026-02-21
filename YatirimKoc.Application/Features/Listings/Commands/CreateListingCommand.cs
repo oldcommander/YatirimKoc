@@ -15,10 +15,9 @@ public class CreateListingCommand : IRequest<Guid>
     public string? Neighborhood { get; set; }
 
     [Required]
-    public Guid? ListingTypeId { get; set; }
-
+    public Guid? TransactionTypeId { get; set; } // Satılık, Kiralık vs.
     [Required]
-    public Guid? ListingCategoryId { get; set; }
+    public Guid? PropertyTypeId { get; set; } // Konut, Arsa vs.
 
     public bool IsPublished { get; set; }
 

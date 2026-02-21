@@ -18,12 +18,12 @@ public class GetAllListingsQueryHandler
     }
 
     public async Task<List<Listing>> Handle(
-        GetAllListingsQuery request,
-        CancellationToken cancellationToken)
+            GetAllListingsQuery request,
+            CancellationToken cancellationToken)
     {
         return await _context.Listings
-            .Include(x => x.ListingCategory)
-            .Include(x => x.ListingType)
+            .Include(x => x.TransactionType) // Değişti
+            .Include(x => x.PropertyType)    // Değişti
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
     }

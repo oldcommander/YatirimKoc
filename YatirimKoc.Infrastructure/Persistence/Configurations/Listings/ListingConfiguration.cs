@@ -56,23 +56,16 @@ namespace YatirimKoc.Infrastructure.Persistence.Configurations.Listings
             builder.Property(x => x.Neighborhood)
                 .HasMaxLength(150);
 
-            // --------------------
-            // RELATIONS
-            // --------------------
-            builder.HasOne(x => x.ListingType)
-                .WithMany()
-                .HasForeignKey(x => x.ListingTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.ListingCategory)
-                .WithMany()
-                .HasForeignKey(x => x.ListingCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(x => x.TransactionType)
+                   .WithMany(x => x.Listings)
+                   .HasForeignKey(x => x.TransactionTypeId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.AdminProfile)
-                .WithMany()
-                .HasForeignKey(x => x.AdminProfileId)
-                .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(x => x.PropertyType)
+                   .WithMany(x => x.Listings)
+                   .HasForeignKey(x => x.PropertyTypeId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(x => x.Images)
                 .WithOne(x => x.Listing)
@@ -85,7 +78,6 @@ namespace YatirimKoc.Infrastructure.Persistence.Configurations.Listings
             builder.HasIndex(x => x.Price);
             builder.HasIndex(x => x.IsPublished);
             builder.HasIndex(x => new { x.City, x.District });
-            builder.HasIndex(x => x.CreatedByUserId);
 
             builder.Property(x => x.Latitude)
     .HasPrecision(10, 6);

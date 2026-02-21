@@ -33,12 +33,10 @@ public class CreateListingCommandHandler
             City = request.City,
             District = request.District,
             Neighborhood = request.Neighborhood,
-            ListingTypeId = (Guid)request.ListingTypeId,
-            ListingCategoryId = (Guid)request.ListingCategoryId,
+            TransactionTypeId = request.TransactionTypeId.Value,
+            PropertyTypeId = request.PropertyTypeId.Value,
             IsPublished = request.IsPublished,
             CreatedAt = DateTime.UtcNow,
-            CreatedByUserId = _currentUser.UserId,
-            AdminProfileId = _currentUser.AdminProfileId,
             Latitude = request.Latitude,
             Longitude = request.Longitude
         };
