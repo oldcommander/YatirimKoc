@@ -1,61 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using YatirimKoc.Domain.Entities.Admin;
 using YatirimKoc.Domain.Entities.Listings;
-using YatirimKoc.Domain.Entities.Logs;
-using YatirimKoc.Domain.Entities.Mails;
-using YatirimKoc.Domain.Entities.Messages;
-using YatirimKoc.Domain.Entities.Reservations;
-using YatirimKoc.Domain.Entities.Security;
+using System.Threading;
+using System.Threading.Tasks;
 using YatirimKoc.Domain.Entities.Settings;
 
 namespace YatirimKoc.Application.Abstractions.Persistence;
 
 public interface IApplicationDbContext
 {
-    // --------------------
-    // CORE
-    // --------------------
-    DbSet<AdminProfile> AdminProfiles { get; }
-    DbSet<AuditLog> AuditLogs { get; }
-
-    // --------------------
-    // SITE SETTINGS
-    // --------------------
-    DbSet<SiteSetting> SiteSettings { get; }
-
-    // --------------------
-    // MAIL
-    // --------------------
-    DbSet<MailTemplate> MailTemplates { get; }
-    DbSet<MailLog> MailLogs { get; }
-
-    // --------------------
-    // SECURITY
-    // --------------------
-    DbSet<OtpVerification> OtpVerifications { get; }
-
-    // --------------------
-    // RESERVATION & CONTACT
-    // --------------------
-    DbSet<Reservation> Reservations { get; }
-    DbSet<AdminAvailability> AdminAvailabilities { get; }
-    DbSet<ContactMessage> ContactMessages { get; }
-
-    // --------------------
-    // LISTINGS
-    // --------------------
-    // --------------------
-    // LISTINGS & DYNAMIC FEATURES
-    // --------------------
-    DbSet<Listing> Listings{get; }
+    DbSet<Listing> Listings { get; }
     DbSet<TransactionType> TransactionTypes { get; }
     DbSet<PropertyType> PropertyTypes { get; }
     DbSet<Feature> Features { get; }
     DbSet<PropertyFeature> PropertyFeatures { get; }
     DbSet<ListingFeatureValue> ListingFeatureValues { get; }
+    DbSet<SiteSetting> SiteSettings { get; }
 
-    // --------------------
-    // SAVE
-    // --------------------
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

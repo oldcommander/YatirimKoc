@@ -5,19 +5,30 @@ namespace YatirimKoc.Application.Features.Listings.Commands;
 
 public class CreateListingCommand : IRequest<Guid>
 {
+    [Required]
     public string Title { get; set; } = null!;
+
     public string Description { get; set; } = null!;
+
+    [Required]
     public decimal Price { get; set; }
+
     public string Currency { get; set; } = "TL";
 
+    [Required]
     public string City { get; set; } = null!;
-    public string District { get; set; } = null!;
-    public string? Neighborhood { get; set; }
 
     [Required]
-    public Guid? TransactionTypeId { get; set; } // Satılık, Kiralık vs.
+    public string District { get; set; } = null!;
+
+    public string? Neighborhood { get; set; }
+
+    // ESKİ ListingCategoryId ve ListingTypeId SİLİNDİ, YERİNE BUNLAR GELDİ:
     [Required]
-    public Guid? PropertyTypeId { get; set; } // Konut, Arsa vs.
+    public Guid? TransactionTypeId { get; set; }
+
+    [Required]
+    public Guid? PropertyTypeId { get; set; }
 
     public bool IsPublished { get; set; }
 
@@ -25,5 +36,4 @@ public class CreateListingCommand : IRequest<Guid>
     public double Longitude { get; set; }
 
     public List<string>? ImageUrls { get; set; }
-
 }

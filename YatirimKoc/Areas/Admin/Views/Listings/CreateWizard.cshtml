@@ -1,11 +1,10 @@
-﻿@model CreateListingWizardViewModel
+﻿@model YatirimKoc.Web.Areas.Admin.Models.CreateListingWizardViewModel
 @{
     Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
 }
 
 <div class="wizard">
 
-    <!-- STEP INDICATOR -->
     <div class="wizard-steps">
         <div class="step active" data-step="1">1. Temel Bilgiler</div>
         <div class="step" data-step="2">2. Konum</div>
@@ -17,7 +16,6 @@
     <form asp-action="CreateWizard" method="post" enctype="multipart/form-data" id="wizardForm" novalidate>
         <div asp-validation-summary="All" class="text-danger"></div>
 
-        <!-- STEP 1: Temel Bilgiler -->
         <div class="step-content active" data-step="1">
             <div class="form-grid">
                 <div class="form-group">
@@ -33,21 +31,25 @@
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="ListingCategoryId">Kategori</label>
-                    <select asp-for="ListingCategoryId" class="input-dark"
-                            asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))">
-                        <option value="">Seçiniz</option>
+                    <label asp-for="TransactionTypeId">İşlem Tipi</label>
+                    <select asp-for="TransactionTypeId" class="input-dark" asp-items="@(new SelectList(ViewBag.TransactionTypes, "Id", "Name"))">
+                        <option value="">Seçiniz (Satılık/Kiralık)</option>
                     </select>
-                    <span asp-validation-for="ListingCategoryId" class="text-danger"></span>
+                    <span asp-validation-for="TransactionTypeId" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="ListingTypeId">İlan Tipi</label>
-                    <select asp-for="ListingTypeId" class="input-dark"
-                            asp-items="@(new SelectList(ViewBag.Types, "Id", "Name"))">
-                        <option value="">Seçiniz</option>
+                    <label asp-for="PropertyTypeId">Emlak Tipi</label>
+                    <select asp-for="PropertyTypeId" class="input-dark" asp-items="@(new SelectList(ViewBag.PropertyTypes, "Id", "Name"))">
+                        <option value="">Seçiniz (Konut/Arsa/İşyeri)</option>
                     </select>
-                    <span asp-validation-for="ListingTypeId" class="text-danger"></span>
+                    <span asp-validation-for="PropertyTypeId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                    <label asp-for="Description">İlan Açıklaması</label>
+                    <textarea asp-for="Description" class="input-dark" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
             </div>
 
@@ -56,7 +58,6 @@
             </div>
         </div>
 
-        <!-- STEP 2: Konum -->
         <div class="step-content" data-step="2">
             <div class="form-grid">
                 <div class="form-group">
@@ -78,25 +79,11 @@
             </div>
         </div>
 
-        <!-- STEP 3: Özellikler -->
         <div class="step-content" data-step="3">
             <div class="form-grid">
-                <div class="form-group">
-                    <label asp-for="Bedrooms">Oda Sayısı</label>
-                    <input asp-for="Bedrooms" type="number" class="input-dark" />
-                    <span asp-validation-for="Bedrooms" class="text-danger"></span>
-                </div>
 
-                <div class="form-group">
-                    <label asp-for="Bathrooms">Banyo Sayısı</label>
-                    <input asp-for="Bathrooms" type="number" class="input-dark" />
-                    <span asp-validation-for="Bathrooms" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Area">Alan (m²)</label>
-                    <input asp-for="Area" type="number" class="input-dark" />
-                    <span asp-validation-for="Area" class="text-danger"></span>
+                <div class="form-group" style="grid-column: span 2;">
+                    <p class="text-warning"><i>* Bu ekrandaki detaylı özellikler (Oda Sayısı, İmar Durumu vs.), "Temel Bilgiler" adımında seçtiğiniz <b>Emlak Tipi</b>'ne göre dinamik olarak yüklenecektir. (AJAX Entegrasyonu Bekleniyor)</i></p>
                 </div>
 
                 <div class="form-group">
@@ -111,7 +98,6 @@
             </div>
         </div>
 
-        <!-- STEP 4: Görseller -->
         <div class="step-content" data-step="4">
             <div class="form-group">
                 <label>Fotoğraflar</label>
@@ -128,22 +114,21 @@
             </div>
         </div>
 
-        <!-- STEP 5: Onay -->
         <div class="step-content" data-step="5">
             <h3>Onayla ve Kaydet</h3>
 
             <div class="form-summary">
                 <p><b>Başlık:</b> <span id="summaryTitle"></span></p>
                 <p><b>Fiyat:</b> <span id="summaryPrice"></span></p>
-                <p><b>Kategori:</b> <span id="summaryCategory"></span></p>
-                <p><b>Tip:</b> <span id="summaryType"></span></p>
+                <p><b>İşlem Tipi:</b> <span id="summaryTransactionType"></span></p>
+                <p><b>Emlak Tipi:</b> <span id="summaryPropertyType"></span></p>
                 <p><b>Şehir:</b> <span id="summaryCity"></span></p>
                 <p><b>İlçe:</b> <span id="summaryDistrict"></span></p>
             </div>
 
             <div class="wizard-buttons">
                 <button type="button" class="btn-secondary" onclick="prevStep(5)">← Geri</button>
-                <button type="submit" class="btn-primary">Kaydet</button>
+                <button type="submit" class="btn-primary">İlanı Kaydet</button>
             </div>
         </div>
 
@@ -153,7 +138,6 @@
 @section Scripts {
     <script>
         var validator;
-
         $(function () {
             // unobtrusive parse zorla
             $.validator.unobtrusive.parse("#wizardForm");
@@ -203,10 +187,7 @@
 
         function nextStep(step) {
             if (!validateStep(step)) return;
-
-            // update summary for step5
             if(step === 4) updateSummary();
-
             changeStep(step, step + 1);
             markStepComplete(step);
         }
@@ -240,8 +221,8 @@
         function updateSummary() {
             $("#summaryTitle").text($("#Title").val());
             $("#summaryPrice").text($("#Price").val());
-            $("#summaryCategory").text($("#ListingCategoryId option:selected").text());
-            $("#summaryType").text($("#ListingTypeId option:selected").text());
+            $("#summaryTransactionType").text($("#TransactionTypeId option:selected").text());
+            $("#summaryPropertyType").text($("#PropertyTypeId option:selected").text());
             $("#summaryCity").text($("#City").val());
             $("#summaryDistrict").text($("#District").val());
         }

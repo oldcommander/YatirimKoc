@@ -1,23 +1,16 @@
 ﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
-using YatirimKoc.Application.Abstractions.Persistence;
-using YatirimKoc.Application.Interfaces;
+using YatirimKoc.Application.Abstractions.Persistence; // YENİ: Doğru referans
 using YatirimKoc.Domain.Entities.Listings;
-
 
 namespace YatirimKoc.Application.Features.Listings.Commands;
 
-public class CreateListingCommandHandler
-    : IRequestHandler<CreateListingCommand, Guid>
+public class CreateListingCommandHandler : IRequestHandler<CreateListingCommand, Guid>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ICurrentUserService _currentUser;
+    private readonly IApplicationDbContext _context; // YENİ: Interface kullanıyoruz
 
-    public CreateListingCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public CreateListingCommandHandler(IApplicationDbContext context)
     {
         _context = context;
-        _currentUser = currentUser;
     }
 
     public async Task<Guid> Handle(CreateListingCommand request, CancellationToken cancellationToken)
@@ -26,61 +19,42 @@ public class CreateListingCommandHandler
         {
             Id = Guid.NewGuid(),
             Title = request.Title,
-            Slug = await GenerateSlugAsync(request.Title, cancellationToken),
-            Description = request.Description,
+            Slug = request.Title.ToLower().Replace(" ", "-").Replace("ı", "i").Replace("ğ", "g").Replace("ü", "u").Replace("ş", "s").Replace("ö", "o").Replace("ç", "c"),
+            Description = request.Description ?? "",
             Price = request.Price,
             Currency = request.Currency,
             City = request.City,
             District = request.District,
             Neighborhood = request.Neighborhood,
-            TransactionTypeId = request.TransactionTypeId.Value,
-            PropertyTypeId = request.PropertyTypeId.Value,
+
+            TransactionTypeId = request.TransactionTypeId!.Value,
+            PropertyTypeId = request.PropertyTypeId!.Value,
+
             IsPublished = request.IsPublished,
-            CreatedAt = DateTime.UtcNow,
             Latitude = request.Latitude,
-            Longitude = request.Longitude
+            Longitude = request.Longitude,
+
+            // TODO: Authentication/Identity eklendiğinde CurrentUser'dan alınacak
+            CreatedByUserId = Guid.Empty,
+            CreatedAt = DateTime.UtcNow
         };
 
-        if (request.ImageUrls != null)
+        if (request.ImageUrls != null && request.ImageUrls.Any())
         {
-            listing.Images = request.ImageUrls
-                .Select((url, index) => new ListingImage
+            foreach (var url in request.ImageUrls)
+            {
+                listing.Images.Add(new ListingImage
                 {
                     Id = Guid.NewGuid(),
                     ImageUrl = url,
-                    Order = index,
-                    IsCover = index == 0
-                }).ToList();
+                    IsCover = listing.Images.Count == 0 
+                });
+            }
         }
 
-        await _context.Listings.AddAsync(listing);
+        _context.Listings.Add(listing);
         await _context.SaveChangesAsync(cancellationToken);
 
         return listing.Id;
     }
-    private async Task<string> GenerateSlugAsync(string title, CancellationToken cancellationToken)
-    {
-        var slug = title.ToLowerInvariant();
-
-        slug = slug
-            .Replace("ı", "i")
-            .Replace("ğ", "g")
-            .Replace("ü", "u")
-            .Replace("ş", "s")
-            .Replace("ö", "o")
-            .Replace("ç", "c");
-
-        slug = Regex.Replace(slug, @"[^a-z0-9\s-]", "");
-        slug = Regex.Replace(slug, @"\s+", "-").Trim('-');
-
-        // unique kontrol
-        var exists = await _context.Listings
-            .AnyAsync(x => x.Slug == slug, cancellationToken);
-
-        if (exists)
-            slug = $"{slug}-{Guid.NewGuid().ToString().Substring(0, 6)}";
-
-        return slug;
-    }
-
 }
