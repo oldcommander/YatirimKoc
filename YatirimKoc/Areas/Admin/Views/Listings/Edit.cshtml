@@ -100,12 +100,12 @@
                     <div class="form-group">
                         <label style="display:flex; justify-content:space-between;">
                             <span>Harita Konumu (İşaretleyin)</span>
-                            <span id="coordDisplay" style="color:var(--accent-2); font-size:12px;">@Model.Latitude.ToString().Replace(",", "."), @Model.Longitude.ToString().Replace(",", ".")</span>
+                            <span id="coordDisplay" style="color:var(--accent-2); font-size:12px;">Yükleniyor...</span>
                         </label>
                         <div id="mapWrapper" style="height: 250px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-border);"></div>
 
-                        <input type="hidden" name="Latitude" id="Latitude" value="@Model.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
-                        <input type="hidden" name="Longitude" id="Longitude" value="@Model.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                        <input type="hidden" name="Latitude" id="Latitude" value="@Model.Latitude" />
+                        <input type="hidden" name="Longitude" id="Longitude" value="@Model.Longitude" />
                     </div>
                 </div>
 
@@ -154,29 +154,26 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. MEVCUT ÖZELLİKLERİ JS OBJESİ OLARAK ALIYORUZ (Sayfa yüklendiğinde içi dolsun diye)
+        // 1. MEVCUT ÖZELLİKLERİ JS OBJESİ OLARAK ALIYORUZ
         var existingFeatures = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FeatureValues));
 
         $(function () {
-            // Ankara İlçeleri (Aynı mantık)
+            // Ankara İlçeleri
             const ankaraDistricts = ["Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya", "Çubuk", "Elmadağ", "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana", "Kahramankazan", "Kalecik", "Keçiören", "Kızılcahamam", "Mamak", "Nallıhan", "Polatlı", "Pursaklar", "Sincan", "Şereflikoçhisar", "Yenimahalle"];
             const districtSelect = $("#DistrictSelect");
-            const currentDistrict = "@Model.District"; // Mevcut ilçeyi yakala
+            const currentDistrict = "@Model.District";
 
             ankaraDistricts.sort().forEach(d => {
                 let selected = (d === currentDistrict) ? "selected" : "";
                 districtSelect.append(`<option value="${d}" ${selected}>${d}</option>`);
             });
 
-            // Sayfa açıldığında özellikleri otomatik yükle
             loadFeatures($("#PropertyTypeSelect").val());
 
-            // Kategori değişirse özellikleri yeniden yükle
             $("#PropertyTypeSelect").on("change", function () {
                 loadFeatures($(this).val());
             });
 
-            // Haritayı başlat
             setTimeout(initMap, 300);
         });
 
@@ -196,8 +193,6 @@
                     html += '<label>' + feature.name + '</label>';
 
                     var inputName = 'FeatureValues[' + feature.id + ']';
-
-                    // MEVCUT DEĞERİ (VARSA) GETİR
                     var existingVal = existingFeatures[feature.id] || "";
 
                     if (feature.inputType === "Select") {
@@ -223,41 +218,52 @@
             });
         }
 
-        // 3. MEVCUT RESİMLERİ SİLME İŞLEMİ (Çarpıya Basınca)
+        // 3. MEVCUT RESİMLERİ SİLME İŞLEMİ
         function removeExistingImage(id) {
-            // Resmi ekrandan kaybet
             $("#img-box-" + id).fadeOut(300, function() { $(this).remove(); });
-
-            // Controller'a silindi bilgisini göndermek için gizli input oluştur
             $("#deletedImagesInputs").append(`<input type="hidden" name="DeletedImageIds" value="${id}" />`);
         }
 
-        // 4. HARİTA İŞLEMLERİ
+        // 4. HARİTA İŞLEMLERİ (FORMAT HATASI BURADA DÜZELTİLDİ)
         let map, marker;
-                function initMap() {
-                    let lat = parseFloat($("#Latitude").val().replace(',', '.'));
-                    let lng = parseFloat($("#Longitude").val().replace(',', '.'));
+        function initMap() {
+            // Js içindeki virgülleri noktaya çevirip okuyalım
+            let lat = parseFloat($("#Latitude").val().replace(',', '.'));
+            let lng = parseFloat($("#Longitude").val().replace(',', '.'));
 
-                    if (lat > 1000) lat = lat / 10000;
-                    if (lng > 1000) lng = lng / 10000;
+            // ÇÖZÜM 1: Sizin bahsettiğiniz temel kontrol
+            if (lat > 1000) { lat = lat / 10000; }
+            if (lng > 1000) { lng = lng / 10000; }
 
-                    if (isNaN(lat) || lat === 0) { lat = 39.9334; lng = 32.8597; }
+            // ÇÖZÜM 2: Ekstra Güvenlik (Çok büyük sayılar kaydedilmişse
+            // doğru koordinat aralığına gelene kadar ondalık kaydırır)
+            while (Math.abs(lat) > 90) { lat = lat / 10; }
+            while (Math.abs(lng) > 180) { lng = lng / 10; }
 
-                    map = L.map('mapWrapper').setView([lat, lng], 13);
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(map);
-                    marker = L.marker([lat, lng]).addTo(map);
+            // Eğer NaN veya 0 dönerse varsayılan Türkiye Koordinatları
+            if (lat === 0 || isNaN(lat)) { lat = 39.0; lng = 35.0; }
 
-                    map.on('click', function(e) {
-                        marker.setLatLng(e.latlng);
+            // İlk yüklendiğinde düzelmiş koordinatı label üzerine yazdıralım
+            $("#coordDisplay").text(lat.toFixed(4) + ", " + lng.toFixed(4));
 
-                        // ÇÖZÜM: Güncelleme ekranında da noktayı virgüle çeviriyoruz
-                        $("#Latitude").val(e.latlng.lat.toString().replace('.', ','));
-                        $("#Longitude").val(e.latlng.lng.toString().replace('.', ','));
+            map = L.map('mapWrapper').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(map);
+            marker = L.marker([lat, lng]).addTo(map);
 
-                        $("#coordDisplay").text(e.latlng.lat.toFixed(4) + ", " + e.latlng.lng.toFixed(4));
-                    });
-                    map.invalidateSize();
-                }
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+
+                // KRİTİK DEĞİŞİKLİK:
+                // Eski kodunuzda "e.latlng.lat.toString().replace('.', ',')" kullanılıyordu.
+                // Bu virgül, model binding esnasında soruna yol açıp sayıyı binlerce kat büyütüyordu.
+                // Artık InvariantCulture standartında (Nokta ile) yazdırıyoruz.
+                $("#Latitude").val(e.latlng.lat);
+                $("#Longitude").val(e.latlng.lng);
+
+                $("#coordDisplay").text(e.latlng.lat.toFixed(4) + ", " + e.latlng.lng.toFixed(4));
+            });
+            map.invalidateSize();
+        }
 
         // 5. YENİ DOSYA YÜKLEME (Sürükle & Bırak Önizleme)
         const dropArea = document.getElementById("dropArea");

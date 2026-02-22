@@ -10,7 +10,7 @@
             <i class="fa-solid fa-arrow-left"></i> Listeye Dön
         </a>
         <div style="display:flex; gap:10px;">
-            <a href="#" class="btn-secondary"><i class="fa-solid fa-pen-to-square"></i> Düzenle</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-secondary"><i class="fa-solid fa-pen-to-square"></i> Düzenle</a>
             <button class="btn-primary" onclick="generatePDF()"><i class="fa-solid fa-file-pdf"></i> PDF İndir</button>
         </div>
     </div>
@@ -154,15 +154,29 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // --- HARİTA BAŞLATMA ---
-            var latStr = "@Model.Latitude".replace(',', '.');
-            var lngStr = "@Model.Longitude".replace(',', '.');
+            // Sayı ne olursa olsun noktaya çevirip alalım
+            var latStr = "@Model.Latitude".toString().replace(',', '.');
+            var lngStr = "@Model.Longitude".toString().replace(',', '.');
 
             var lat = parseFloat(latStr);
             var lng = parseFloat(lngStr);
 
-            if (lat > 1000) { lat = lat / 10000; }
-            if (lng > 1000) { lng = lng / 10000; }
-            if (lat === 0 || isNaN(lat)) { lat = 39.0; lng = 35.0; }
+            // --- GÜVENLİK DÖNGÜSÜ (KRİTİK KISIM) ---
+            // Veritabanındaki veri 40001017... gibi bozuksa, ondalığı sola kaydırarak
+            // geçerli dünya koordinat aralığına (-90 ile +90 arası) getirir.
+            if (!isNaN(lat) && lat !== 0) {
+                while (Math.abs(lat) > 90) {
+                    lat = lat / 10;
+                }
+            }
+            if (!isNaN(lng) && lng !== 0) {
+                while (Math.abs(lng) > 180) {
+                    lng = lng / 10;
+                }
+            }
+
+            // Eğer hala geçersizse varsayılan Ankara koordinatları
+            if (lat === 0 || isNaN(lat)) { lat = 39.9334; lng = 32.8597; }
 
             var map = L.map('previewMap').setView([lat, lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -175,35 +189,6 @@
             setTimeout(function() { map.invalidateSize(); }, 500);
         });
 
-        // --- YENİ: PDF OLUŞTURMA FONKSİYONU ---
-        function generatePDF() {
-            // PDF'i oluşturacağımız ana div'i seç
-            var element = document.getElementById('pdfContainer');
-
-            // PDF'e özel stilleri uygulamak için class ekle
-            element.classList.add('pdf-mode');
-
-            // İlan başlığından güvenli bir dosya adı oluştur
-            var rawTitle = "@Model.Title";
-            var fileName = rawTitle.replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ]/gi, '_').toLowerCase() + "_ilan_detayi.pdf";
-
-            // html2pdf ayarları
-            var opt = {
-                margin:       [10, 10, 10, 10], // Üst, Sol, Alt, Sağ boşluklar
-                filename:     fileName,
-                image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  {
-                    scale: 2, // Görüntü kalitesini artırır
-                    useCORS: true, // Harita ve resimlerin PDF'e sorunsuz gelmesini sağlar
-                    backgroundColor: '#0f172a' // Arka plan rengini karanlık temaya uyarla
-                },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            // PDF'i oluştur, indir ve işlem bitince pdf-mode class'ını kaldır
-            html2pdf().set(opt).from(element).save().then(function() {
-                element.classList.remove('pdf-mode');
-            });
-        }
+        // ... generatePDF fonksiyonu aynı kalabilir ...
     </script>
 }

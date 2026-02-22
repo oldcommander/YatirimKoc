@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using YatirimKoc.Application.Abstractions.Persistence;
-using YatirimKoc.Application.Interfaces;
 using YatirimKoc.Domain.Entities.Listings;
 
 namespace YatirimKoc.Application.Features.Listings.Commands;
@@ -9,26 +8,25 @@ namespace YatirimKoc.Application.Features.Listings.Commands;
 public class UpdateListingCommandHandler : IRequestHandler<UpdateListingCommand, bool>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IFileUploadService _fileUploadService;
 
-    public UpdateListingCommandHandler(IApplicationDbContext context, IFileUploadService fileUploadService)
+    public UpdateListingCommandHandler(IApplicationDbContext context)
     {
         _context = context;
-        _fileUploadService = fileUploadService;
     }
 
     public async Task<bool> Handle(UpdateListingCommand request, CancellationToken cancellationToken)
     {
+        // 1. İlanı, Resimleri ve Özellik Değerlerini veritabanından çekiyoruz. (EF Core nesneyi izlemeye başlar)
         var listing = await _context.Listings
-            .Include(x => x.Images)
-            .Include(x => x.FeatureValues)
-            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+            .Include(l => l.Images)
+            .Include(l => l.FeatureValues)
+            .FirstOrDefaultAsync(l => l.Id == request.Id, cancellationToken);
 
-        if (listing == null) return false;
+        if (listing == null)
+            throw new Exception("Güncellenmek istenen ilan bulunamadı.");
 
-        // 1. Temel Bilgileri Güncelle
+        // 2. Ana özellikleri (Title, Price vb.) güncelliyoruz
         listing.Title = request.Title;
-        listing.Slug = request.Title.ToLower().Replace(" ", "-").Replace("ı", "i").Replace("ğ", "g").Replace("ü", "u").Replace("ş", "s").Replace("ö", "o").Replace("ç", "c");
         listing.Description = request.Description;
         listing.Price = request.Price;
         listing.City = request.City;
@@ -39,75 +37,71 @@ public class UpdateListingCommandHandler : IRequestHandler<UpdateListingCommand,
         listing.Latitude = request.Latitude;
         listing.Longitude = request.Longitude;
 
-        // 2. Silinen Resimleri İşle (Fiziksel klasörden ve DB'den uçur)
-        if (request.DeletedImageIds != null && request.DeletedImageIds.Any())
-        {
-            var imagesToDelete = listing.Images.Where(i => request.DeletedImageIds.Contains(i.Id)).ToList();
-            foreach (var img in imagesToDelete)
-            {
-                await _fileUploadService.DeleteAsync(img.ImageUrl); // Sunucudan fiziksel olarak sil
+        // NOT: Eğer slug alanını title'dan türetiyorsanız burada atamasını yapabilirsiniz. 
+        // Örn: listing.Slug = GenerateSlug(request.Title);
 
-                // GARANTİ YÖNTEM: listing.Images.Remove(img) YERİNE DOĞRUDAN CONTEXT'TEN SİLİYORUZ
-                _context.ListingImages.Remove(img);
-            }
-        }
-
-        // 3. Yeni Yüklenen Resimleri Ekle
+        // 3. YENİ RESİMLERİ EKLEME İŞLEMİ
         if (request.NewImageUrls != null && request.NewImageUrls.Any())
         {
-            foreach (var url in request.NewImageUrls)
+            foreach (var imageUrl in request.NewImageUrls)
             {
                 listing.Images.Add(new ListingImage
                 {
-                    Id = Guid.NewGuid(),
-                    ImageUrl = url,
-                    IsCover = listing.Images.Count == 0 // Eğer hiç resim kalmadıysa ilk yüklenen kapak olur
-                });
-            }
-        }
-
-        // 4. Dinamik Özellikleri (Features) Güncelle
-        var incomingFeatures = request.FeatureValues ?? new Dictionary<Guid, string>();
-
-        // 4.1. Formdan Gelen Listede OLMAYAN (Silinmiş veya Boşaltılmış) Özellikleri Bul
-        var featuresToRemove = listing.FeatureValues
-            .Where(f => !incomingFeatures.ContainsKey(f.FeatureId) || string.IsNullOrWhiteSpace(incomingFeatures[f.FeatureId]))
-            .ToList();
-
-        foreach (var feature in featuresToRemove)
-        {
-            // ÇÖZÜM: list.Remove() metodunu kullanmıyoruz, sadece DbSet'ten uçuruyoruz.
-            // Böylece EF Core sadece tek bir DELETE sorgusu üretecek ve patlamayacak.
-            _context.ListingFeatureValues.Remove(feature);
-        }
-
-        // 4.2. Gelen Özellikleri Güncelle veya Yeni İse Ekle
-        foreach (var kvp in incomingFeatures)
-        {
-            if (string.IsNullOrWhiteSpace(kvp.Value)) continue;
-
-            // Bu özellik zaten ilanımızda kayıtlı mı?
-            var existingFeature = listing.FeatureValues.FirstOrDefault(f => f.FeatureId == kvp.Key);
-
-            if (existingFeature != null)
-            {
-                // Kayıtlıysa, sadece değerini (Value) güncelle (EF Core bu kısmı sadece UPDATE yapar)
-                existingFeature.Value = kvp.Value;
-            }
-            else
-            {
-                // İlanda daha önce böyle bir özellik yoksa, yeni satır olarak ekle
-                _context.ListingFeatureValues.Add(new ListingFeatureValue
-                {
                     ListingId = listing.Id,
-                    FeatureId = kvp.Key,
-                    Value = kvp.Value
+                    ImageUrl = imageUrl,
+                    IsCover = listing.Images.Count == 0, // Eğer hiç resim yoksa ilkini kapak yapabiliriz
+                    Order = listing.Images.Count + 1
                 });
             }
         }
 
-        // 5. Kaydet ve Bitir
-        await _context.SaveChangesAsync(cancellationToken);
-        return true;
+        // 4. SİLİNECEK RESİMLERİ ÇIKARMA İŞLEMİ
+        if (request.DeletedImageIds != null && request.DeletedImageIds.Any())
+        {
+            var imagesToRemove = listing.Images
+                .Where(img => request.DeletedImageIds.Contains(img.Id))
+                .ToList();
+
+            foreach (var img in imagesToRemove)
+            {
+                listing.Images.Remove(img);
+                _context.ListingImages.Remove(img); // DB'den de silinmesi için EF'e bildiriyoruz
+            }
+        }
+
+        // 5. FEATURE (ÖZELLİK) DEĞERLERİNİ GÜNCELLEME İŞLEMİ
+        if (request.FeatureValues != null)
+        {
+            foreach (var featureValue in request.FeatureValues)
+            {
+                // İlgili özellik (FeatureId) ilanda zaten var mı diye bakıyoruz
+                var existingFeature = listing.FeatureValues.FirstOrDefault(f => f.FeatureId == featureValue.Key);
+
+                if (existingFeature != null)
+                {
+                    // Varsa sadece değerini güncelliyoruz
+                    existingFeature.Value = featureValue.Value;
+                }
+                else
+                {
+                    // Yoksa listeye yeni bir özellik değeri olarak ekliyoruz
+                    listing.FeatureValues.Add(new ListingFeatureValue
+                    {
+                        ListingId = listing.Id,
+                        FeatureId = featureValue.Key,
+                        Value = featureValue.Value
+                    });
+                }
+            }
+        }
+
+        // DİKKAT: BURADA _context.Listings.Update(listing); KULLANMIYORUZ!
+        // Entity'i Include ile çektiğimiz için Entity Framework yeni eklenenlerin INSERT,
+        // silinenlerin DELETE ve değişenlerin UPDATE olması gerektiğini zaten biliyor.
+
+        // 6. İşlemleri Veritabanına Kaydet
+        var result = await _context.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
     }
 }
