@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using YatirimKoc.Domain.Entities.Settings;
 using YatirimKoc.Domain.Entities.Admin;
 using YatirimKoc.Domain.Entities.Messages;
-using YatirimKoc.Domain.Entities.Reservations; // YENİ: AdminProfile için eklendi
+using YatirimKoc.Domain.Entities.Reservations;
+using YatirimKoc.Domain.Entities.Mails; // YENİ: AdminProfile için eklendi
 
 namespace YatirimKoc.Application.Abstractions.Persistence;
 
@@ -21,6 +22,7 @@ public interface IApplicationDbContext
     DbSet<SiteSetting> SiteSettings { get; }
     DbSet<ContactMessage> ContactMessages { get; }
     DbSet<Reservation> Reservations { get; }
+    DbSet<MailTemplate> MailTemplates { get; }
 
     // YENİ EKLENEN KISIM:
     DbSet<AdminProfile> AdminProfiles { get; }

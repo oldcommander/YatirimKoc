@@ -1,0 +1,58 @@
+﻿@model YatirimKoc.Application.Features.MailTemplates.Commands.UpdateMailTemplateCommand
+@{
+    ViewData["Title"] = "Mail Şablonu Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<div class="fade-in-up">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+        <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px; color:#fff;">Şablon Düzenle</h2>
+        <a asp-action="Index" class="btn-secondary" style="text-decoration:none;">
+            <i class="fas fa-arrow-left me-2"></i> İptal
+        </a>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 30px; border-top: 5px solid var(--accent-2);">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Şablon Kodu</label>
+                    <input asp-for="Code" class="input-dark" style="color:var(--accent-2); font-weight:bold;" readonly />
+                    <span style="font-size:11px; color:var(--muted);">Sistem bütünlüğü için kod değiştirilemez.</span>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Durum</label>
+                    <div style="padding-top:10px;">
+                        <label class="d-flex align-items-center" style="cursor:pointer; color:#fff;">
+                            <input asp-for="IsActive" type="checkbox" style="width:20px; height:20px; accent-color:var(--accent-2); margin-right:10px;" />
+                            Aktif (Kullanıma Hazır)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Mail Konusu (Subject)</label>
+                <input asp-for="Subject" class="input-dark" required />
+                <span asp-validation-for="Subject" class="text-danger" style="font-size:12px;"></span>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">
+                    Mail İçeriği (HTML)
+                </label>
+                <textarea asp-for="BodyHtml" class="input-dark" rows="15" style="font-family:monospace; line-height:1.6;" required></textarea>
+                <span asp-validation-for="BodyHtml" class="text-danger" style="font-size:12px;"></span>
+            </div>
+
+            <div class="text-end pt-3 border-top border-secondary">
+                <button type="submit" class="btn-primary px-5 py-3" style="font-size:16px; background:var(--accent-2);">
+                    <i class="fa-solid fa-check me-2"></i> Değişiklikleri Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

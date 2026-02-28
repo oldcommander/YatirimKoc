@@ -1,0 +1,177 @@
+﻿@using YatirimKoc.Application.Common.Models
+@model PaginatedList<YatirimKoc.Application.Features.MailTemplates.Dtos.MailTemplateDto>
+@{
+    ViewData["Title"] = "Mail Şablonları";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<div class="fade-in-up">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="glass-panel mb-4" style="border-left: 4px solid #10b981; padding: 15px 20px; color: #10b981; font-weight: 600; display:flex; justify-content:space-between; align-items:center;">
+            <div><i class="fa-solid fa-circle-check me-2"></i> @TempData["SuccessMessage"]</div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+        </div>
+    }
+
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 25px; margin-bottom: 30px; border-left: 5px solid var(--accent-1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+            <div>
+                <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px;">Mail Şablonları</h2>
+                <p style="color: var(--muted); margin: 5px 0 0 0;">Sistem tarafından gönderilen otomatik mailleri yönetin.</p>
+            </div>
+            <a asp-action="Create" class="btn-primary" style="text-decoration:none;">
+                <i class="fa-solid fa-plus me-2"></i> Yeni Şablon
+            </a>
+        </div>
+
+        <hr style="border-color: var(--glass-border); margin: 20px 0;" />
+
+        <form method="get" asp-action="Index" class="form-grid" style="grid-template-columns: 1fr auto auto; gap: 15px; align-items: end;">
+            <div class="form-group">
+                <input type="text" name="searchTerm" value="@ViewData["CurrentSearch"]" class="input-dark" placeholder="Şablon kodu veya konu ara..." />
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary" style="background:var(--accent-2);">Ara</button>
+            </div>
+            <div class="form-group">
+                <a asp-action="Index" class="btn-secondary" style="text-decoration:none;">Sıfırla</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 10px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width:800px;">
+            <thead>
+                <tr style="color: var(--muted); font-size:12px; text-transform:uppercase; border-bottom: 1px solid var(--glass-border);">
+                    <th style="padding: 20px; text-align:left;">Şablon Kodu</th>
+                    <th style="padding: 20px; text-align:left;">Konu (Subject)</th>
+                    <th style="padding: 20px; text-align:left;">Durum</th>
+                    <th style="padding: 20px; text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr class="table-row-hover" style="border-bottom: 1px solid rgba(255,255,255,0.03);" id="row-@item.Id">
+                        <td style="padding: 15px 20px;">
+                            <div style="font-weight:700; font-size:14px; color:var(--accent-1); font-family:monospace;">@item.Code</div>
+                        </td>
+                        <td style="padding: 15px 20px; color:#e2e8f0; font-weight:500;">
+                            @item.Subject
+                        </td>
+                        <td style="padding: 15px 20px;">
+                            @if (item.IsActive)
+                            {
+                                <span style="background:rgba(16,185,129,0.1); color:#10b981; padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700;"><i class="fa-solid fa-circle-check me-1"></i> Aktif</span>
+                            }
+                            else
+                            {
+                                <span style="background:rgba(239,68,68,0.1); color:#ef4444; padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700;"><i class="fa-solid fa-circle-xmark me-1"></i> Pasif</span>
+                            }
+                        </td>
+                        <td style="padding: 15px 20px; text-align:right;">
+                            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="action-icon" title="Düzenle" style="color:var(--accent-2);">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <button type="button" class="action-icon" style="color:#ef4444; border:none; cursor:pointer;" onclick="openDeleteModal('@item.Id', '@item.Code')">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; padding:0 10px;">
+            <div style="color:var(--muted); font-size:14px;">Toplam <b>@Model.TotalCount</b> şablon</div>
+            <div style="display:flex; gap:10px;">
+                <a asp-action="Index" asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-searchTerm="@ViewData["CurrentSearch"]" class="action-icon @(!Model.HasPreviousPage ? "disabled-btn" : "")" style="width:auto; padding:0 15px;">Önceki</a>
+                <div class="action-icon active-page" style="border-color:var(--accent-1); color:var(--accent-1);">@Model.PageNumber</div>
+                <a asp-action="Index" asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-searchTerm="@ViewData["CurrentSearch"]" class="action-icon @(!Model.HasNextPage ? "disabled-btn" : "")" style="width:auto; padding:0 15px;">Sonraki</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="deleteModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-box glass-panel" style="width: 400px; padding: 30px; border-radius: 20px; border: 1px solid rgba(239, 68, 68, 0.3); text-align:center;">
+        <div style="width: 70px; height: 70px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #ef4444; font-size: 30px;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 style="color:#fff; margin-bottom:10px; font-weight:700;">Şablonu Sil?</h3>
+        <p style="color:var(--muted); font-size:14px; margin-bottom:20px;"><b><span id="modalDeleteCode"></span></b> kodlu şablon silinecektir. Emin misiniz?</p>
+        <div style="display:flex; justify-content:center; gap:15px;">
+            <button class="btn-secondary" onclick="closeDeleteModal()" style="flex: 1;">İptal</button>
+            <button class="btn-primary" onclick="executeDelete()" style="flex: 1; background: #ef4444;">Evet, Sil</button>
+        </div>
+        <input type="hidden" id="deleteId" />
+    </div>
+</div>
+
+<style>
+    .action-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        text-decoration: none;
+        border: 1px solid var(--glass-border);
+        transition: 0.3s;
+    }
+
+        .action-icon:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+    .table-row-hover:hover {
+        background: rgba(255,255,255,0.02);
+    }
+
+    .disabled-btn {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .active-page {
+        background: rgba(139, 92, 246, 0.1) !important;
+        font-weight: 700;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const deleteModal = document.getElementById('deleteModal');
+        function openDeleteModal(id, code) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('modalDeleteCode').innerText = code;
+            deleteModal.style.display = 'flex';
+        }
+        function closeDeleteModal() { deleteModal.style.display = 'none'; }
+        function executeDelete() {
+            const id = document.getElementById('deleteId').value;
+            $.post('/Admin/MailTemplates/Delete', { id: id }, function(res) {
+                if(res.success) { location.reload(); } else { alert(res.message); closeDeleteModal(); }
+            });
+        }
+    </script>
+}
