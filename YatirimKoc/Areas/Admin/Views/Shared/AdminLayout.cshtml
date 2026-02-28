@@ -107,14 +107,13 @@
 
                     <li class="has-children @(currentController.ToLower() == "mails" ? "expanded active" : "")">
                         <a href="#">
-                            <span class="icon"><i class="fa-solid fa-calendar"></i></span>
+                            <span class="icon"><i class="fa-solid fa-envelope-open-text"></i></span>
                             <span class="label">Mail Yönetimi</span>
                         </a>
                         <ul class="submenu">
-                            <li><a asp-area="Admin" asp-controller="Mails" asp-action="Index">Aboneler (Havuz)</a></li>
+                            <li><a asp-area="Admin" asp-controller="Mails" asp-action="Index">Mail Şablonları</a></li>
                         </ul>
                     </li>
-                    
                 </ul>
             </div>
         </nav>
