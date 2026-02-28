@@ -1,5 +1,344 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model YatirimKoc.Application.Features.NewsletterSubscribers.Queries.PaginatedSubscriberResult
+
 @{
+    ViewData["Title"] = "Bülten Aboneleri";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<div class="fade-in-up">
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 25px; margin-bottom: 30px; border-left: 5px solid var(--accent-1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+            <div>
+                <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px;">Bülten Aboneleri</h2>
+                <p style="color: var(--muted); margin: 5px 0 0 0;">Toplam @Model.TotalCount abone listeleniyor.</p>
+            </div>
+        </div>
+
+        <hr style="border-color: var(--glass-border); margin: 20px 0;" />
+
+        <form method="get" asp-action="Index" class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group">
+                <label style="font-size:12px; opacity:0.7;">E-Posta Ara</label>
+                <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" class="input-dark" placeholder="Örn: ali.yilmaz..." />
+            </div>
+            <div class="form-group">
+                <label style="font-size:12px; opacity:0.7;">Durum Filtresi</label>
+                <select name="isActive" class="input-dark">
+                    <option value="">Tümü</option>
+                    <option value="true" selected="@(ViewBag.IsActive == true ? "selected" : null)">Aktif Aboneler</option>
+                    <option value="false" selected="@(ViewBag.IsActive == false ? "selected" : null)">Pasif Aboneler</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="font-size:12px; opacity:0.7;">Sıralama</label>
+                <select name="sortOrder" class="input-dark">
+                    <option value="date_desc" selected="@(ViewBag.SortOrder == "date_desc" ? "selected" : null)">En Yeniler Önce</option>
+                    <option value="date_asc" selected="@(ViewBag.SortOrder == "date_asc" ? "selected" : null)">En Eskiler Önce</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary" style="width:100%; justify-content:center; background:var(--accent-2);">
+                    <i class="fa-solid fa-filter"></i> Filtrele
+                </button>
+            </div>
+            <div class="form-group">
+                <a asp-action="Index" class="btn-secondary" style="width:100%; justify-content:center; text-decoration:none; display:flex; align-items:center;">
+                    <i class="fa-solid fa-rotate-left"></i> Sıfırla
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 10px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width:800px;">
+            <thead>
+                <tr style="color: var(--muted); font-size:12px; text-transform:uppercase; border-bottom: 1px solid var(--glass-border);">
+                    <th style="padding: 20px; text-align:left;">E-Posta Adresi</th>
+                    <th style="padding: 20px; text-align:left;">Kayıt Tarihi</th>
+                    <th style="padding: 20px; text-align:left;">Durum</th>
+                    <th style="padding: 20px; text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr class="table-row-hover" style="border-bottom: 1px solid rgba(255,255,255,0.03);" id="row-@item.Id">
+                            <td style="padding: 15px 20px;">
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(139, 92, 246, 0.1); display:flex; align-items:center; justify-content:center; color: var(--accent-1); border: 1px solid var(--glass-border);">
+                                        <i class="fa-solid fa-at"></i>
+                                    </div>
+                                    <div style="font-weight:600; font-size:15px; color:#fff;">@item.Email</div>
+                                </div>
+                            </td>
+                            <td style="padding: 15px 20px; color:var(--muted); font-size:13px;">
+                                <i class="fa-regular fa-calendar-days" style="margin-right:5px; color:var(--accent-2);"></i> @item.CreatedDate.ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                            <td style="padding: 15px 20px;">
+                                @if (item.IsActive)
+                                {
+                                    <div class="status-pill status-active">Aktif</div>
+                                }
+                                else
+                                {
+                                    <div class="status-pill status-passive">Pasif</div>
+                                }
+                            </td>
+                            <td style="padding: 15px 20px; text-align:right;">
+                                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                                    
+                                    <button type="button" class="action-icon" style="color:var(--accent-2); border:none; cursor:pointer;" title="Detay Görüntüle"
+                                            onclick="showGlassModal('@item.Email', '@item.CreatedDate.ToString("dd.MM.yyyy HH:mm")', '@(item.IsActive ? "Aktif" : "Pasif")')">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    
+                                    <button type="button" class="action-icon" style="color:#f59e0b; border:none; cursor:pointer;" title="Durumu Değiştir"
+                                            onclick="toggleStatus('@item.Id', '@(item.IsActive ? "pasife" : "aktife")')">
+                                        <i class="fa-solid fa-sync-alt"></i>
+                                    </button>
+
+                                    <button type="button" class="action-icon" style="color:#ef4444; border:none; cursor:pointer;" title="Sil"
+                                            onclick="deleteSubscriber('@item.Id')">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" style="padding: 50px; text-align:center; color:var(--muted);">
+                            <i class="fa-solid fa-magnifying-glass" style="font-size:30px; opacity:0.3; margin-bottom:15px; display:block;"></i>
+                            Arama kriterlerine uygun abone bulunamadı.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; padding:0 10px 10px 10px;">
+                <div style="color:var(--muted); font-size:14px;">
+                    Toplam <b>@Model.TotalCount</b> aboneden @((Model.PageIndex - 1) * 10 + 1) - @Math.Min(Model.PageIndex * 10, Model.TotalCount) arası gösteriliyor.
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    @{
+                        var prevDisabled = !Model.HasPreviousPage ? "disabled-btn" : "";
+                        var nextDisabled = !Model.HasNextPage ? "disabled-btn" : "";
+                    }
+
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-searchTerm="@ViewBag.SearchTerm"
+                       asp-route-isActive="@ViewBag.IsActive"
+                       asp-route-sortOrder="@ViewBag.SortOrder"
+                       class="action-icon @prevDisabled" style="width:auto; padding:0 15px; gap:8px;">
+                        <i class="fa-solid fa-chevron-left"></i> Önceki
+                    </a>
+
+                    <div class="action-icon active-page" style="border-color:var(--accent-1); color:var(--accent-1); cursor:default;">
+                        @Model.PageIndex
+                    </div>
+
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-searchTerm="@ViewBag.SearchTerm"
+                       asp-route-isActive="@ViewBag.IsActive"
+                       asp-route-sortOrder="@ViewBag.SortOrder"
+                       class="action-icon @nextDisabled" style="width:auto; padding:0 15px; gap:8px;">
+                        Sonraki <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="subscriberDetailGlassModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-box glass-panel" style="width: 450px; padding: 30px; border-radius: 20px; border: 1px solid var(--accent-1); transform: scale(0.9); opacity: 0; transition: all 0.3s ease;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+            <h3 style="color:#fff; margin:0; font-weight:700;"><i class="fa-solid fa-address-card" style="color:var(--accent-1); margin-right:8px;"></i> Abone Detayı</h3>
+            <button type="button" class="action-icon" onclick="closeGlassModal()" style="border:none; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:12px; color:var(--muted); margin-bottom:5px;">E-Posta Adresi</span>
+                <span id="gModalEmail" style="color:#fff; font-weight:600; font-size:16px;"></span>
+            </div>
+            
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:12px; color:var(--muted); margin-bottom:5px;">Kayıt Tarihi</span>
+                <span id="gModalDate" style="color:var(--accent-2); font-weight:600; font-size:14px;"></span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                <span style="font-size:12px; color:var(--muted); margin-bottom:5px;">Mevcut Durum</span>
+                <div id="gModalStatusContainer"></div>
+            </div>
+        </div>
+        
+        <div style="margin-top:25px; text-align:right;">
+            <button class="btn-primary" onclick="closeGlassModal()" style="width:100%; justify-content:center;">Kapat</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ortak Glassmorphism Sınıfları */
+    .status-pill {
+        padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .status-active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .status-active::before { content: ""; width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+    
+    .status-passive { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .status-passive::before { content: ""; width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 10px #ef4444; }
+
+    .action-icon {
+        width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center;
+        color: var(--muted); text-decoration: none; transition: all 0.3s ease; border: 1px solid var(--glass-border);
+    }
+    .action-icon:hover { background: var(--gradient-primary); color: #fff; transform: translateY(-3px); box-shadow: var(--shadow-glow); }
+    .table-row-hover:hover { background: rgba(255,255,255,0.02); }
+    .disabled-btn { opacity: 0.3; pointer-events: none; }
+    .active-page { background: rgba(139, 92, 246, 0.1) !important; font-weight: 700; }
+
+    /* Modal CSS */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 9999;
+    }
+    .modal-overlay.active { display: flex !important; }
+    .modal-overlay.active .modal-box { transform: scale(1) !important; opacity: 1 !important; }
+    
+    /* Satır Silinme Animasyonu */
+    .row-deleting { animation: fadeOutRow 0.5s forwards; }
+    @@keyframes fadeOutRow {
+        0% { opacity: 1; transform: translateX(0); background: rgba(239, 68, 68, 0.1); }
+        100% { opacity: 0; transform: translateX(-20px); height: 0; padding: 0; border: none; }
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Custom Cam Tasarımlı Modal İşlemleri
+        const glassModal = document.getElementById('subscriberDetailGlassModal');
+        const glassModalBox = glassModal.querySelector('.modal-box');
+
+        function showGlassModal(email, date, status) {
+            document.getElementById('gModalEmail').textContent = email;
+            document.getElementById('gModalDate').textContent = date;
+            
+            const statusContainer = document.getElementById('gModalStatusContainer');
+            if(status === 'Aktif') {
+                statusContainer.innerHTML = '<div class="status-pill status-active">Aktif</div>';
+            } else {
+                statusContainer.innerHTML = '<div class="status-pill status-passive">Pasif</div>';
+            }
+
+            glassModal.classList.add('active');
+        }
+
+        function closeGlassModal() {
+            glassModalBox.style.transform = 'scale(0.9)';
+            glassModalBox.style.opacity = '0';
+            setTimeout(() => {
+                glassModal.classList.remove('active');
+                // Stilleri sıfırla ki tekrar açarken animasyon çalışsın
+                glassModalBox.style.transform = '';
+                glassModalBox.style.opacity = '';
+            }, 300);
+        }
+
+        // AJAX İşlemleri (SweetAlert2 ile konsept uyumlu dark tema alertler)
+        function toggleStatus(id, targetStatusText) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Abonenin durumu " + targetStatusText + " çekilecektir.",
+                icon: 'warning',
+                background: '#1e293b',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#8b5cf6', // accent-1
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Evet, Değiştir!',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("ToggleStatus", "NewsletterSubscribers")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(id),
+                        success: function (res) {
+                            if (res.success) {
+                                Swal.fire({ title: 'Başarılı!', text: res.message, icon: 'success', background: '#1e293b', color: '#fff' })
+                                    .then(() => location.reload()); 
+                            } else {
+                                Swal.fire({ title: 'Hata!', text: res.message, icon: 'error', background: '#1e293b', color: '#fff' });
+                            }
+                        }
+                    });
+                }
+            })
+        }
+
+        function deleteSubscriber(id) {
+            Swal.fire({
+                title: 'Silmek İstediğinize Emin Misiniz?',
+                text: "Bu aboneyi kalıcı olarak siliyorsunuz. Bu işlem geri alınamaz!",
+                icon: 'error',
+                background: '#1e293b',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Evet, Sil!',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("Delete", "NewsletterSubscribers")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(id),
+                        success: function (res) {
+                            if (res.success) {
+                                // Satırı animasyonla uçur
+                                const row = document.getElementById('row-' + id);
+                                if (row) {
+                                    row.classList.add('row-deleting');
+                                    setTimeout(() => row.remove(), 500);
+                                }
+                                
+                                // Sağ alt köşede şık bir toast mesaj çıkar
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'bottom-end',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    icon: 'success',
+                                    title: res.message,
+                                    background: '#1e293b',
+                                    color: '#fff'
+                                });
+                            } else {
+                                Swal.fire({ title: 'Hata!', text: res.message, icon: 'error', background: '#1e293b', color: '#fff' });
+                            }
+                        }
+                    });
+                }
+            })
+        }
+    </script>
 }

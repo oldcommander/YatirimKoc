@@ -23,6 +23,8 @@ public interface IApplicationDbContext
     DbSet<ContactMessage> ContactMessages { get; }
     DbSet<Reservation> Reservations { get; }
     DbSet<Mails> Mails { get; }
+    DbSet<MailLog> MailLogs { get; }
+    DbSet<NewsletterSubscriber> NewsletterSubscribers { get; }
 
     // YENİ EKLENEN KISIM:
     DbSet<AdminProfile> AdminProfiles { get; }

@@ -13,6 +13,7 @@ using YatirimKoc.Infrastructure.Repositories;
 using YatirimKoc.Infrastructure.Services;
 using YatirimKoc.Infrastructure.Services.Settings;
 using YatirimKoc.Web.Middlewares;
+using YatirimKoc.Application.Common.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +60,8 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.AddTransient<IMailService, MailService>();
 
 // --------------------
 // MVC

@@ -41,7 +41,7 @@ public class ApplicationDbContext
     public DbSet<Mails> Mails => Set<Mails>();
     public DbSet<MailLog> MailLogs => Set<MailLog>();
 
-
+    public DbSet<NewsletterSubscriber> NewsletterSubscribers { get; set; }
     // --------------------
     // RESERVATION & CONTACT
     // --------------------
