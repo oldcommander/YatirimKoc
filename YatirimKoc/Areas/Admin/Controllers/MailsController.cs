@@ -20,34 +20,65 @@ public class MailsController : Controller
         ViewData["CurrentSearch"] = searchTerm;
         var query = new GetAllMailsQuery { SearchTerm = searchTerm, PageNumber = pageNumber };
         var mails = await _mediator.Send(query);
-
         return View(mails);
+    }
+
+    public IActionResult Create()
+    {
+        return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string email)
+    public async Task<IActionResult> Create(CreateMailCommand command)
     {
-        if (string.IsNullOrWhiteSpace(email))
+        if (ModelState.IsValid)
         {
-            TempData["ErrorMessage"] = "Geçerli bir e-posta adresi giriniz.";
+            await _mediator.Send(command);
+            TempData["SuccessMessage"] = "Mail şablonu başarıyla oluşturuldu.";
             return RedirectToAction(nameof(Index));
         }
+        return View(command);
+    }
 
-        var result = await _mediator.Send(new CreateMailCommand { Email = email });
+    public async Task<IActionResult> Edit(Guid id)
+    {
+        var mail = await _mediator.Send(new GetMailByIdQuery(id));
+        if (mail == null) return NotFound();
 
-        if (result)
-            TempData["SuccessMessage"] = "Yeni abone e-posta havuzuna eklendi.";
-        else
-            TempData["ErrorMessage"] = "Bu e-posta adresi havuzda zaten mevcut!";
+        var command = new UpdateMailCommand
+        {
+            Id = mail.Id,
+            Code = mail.Code,
+            Subject = mail.Subject,
+            BodyHtml = mail.BodyHtml,
+            IsActive = mail.IsActive
+        };
 
-        return RedirectToAction(nameof(Index));
+        return View(command);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(UpdateMailCommand command)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _mediator.Send(command);
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Mail şablonu başarıyla güncellendi.";
+                return RedirectToAction(nameof(Index));
+            }
+            ModelState.AddModelError("", "Güncelleme sırasında bir hata oluştu.");
+        }
+        return View(command);
     }
 
     [HttpPost]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteMailCommand(id));
-        return Json(new { success = result, message = result ? "Abone başarıyla silindi." : "Silme işlemi sırasında hata oluştu." });
+        return Json(new { success = result, message = result ? "Şablon başarıyla silindi." : "Silme işlemi sırasında bir hata oluştu." });
     }
 }

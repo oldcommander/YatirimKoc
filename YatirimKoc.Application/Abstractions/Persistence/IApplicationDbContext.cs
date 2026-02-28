@@ -22,7 +22,7 @@ public interface IApplicationDbContext
     DbSet<SiteSetting> SiteSettings { get; }
     DbSet<ContactMessage> ContactMessages { get; }
     DbSet<Reservation> Reservations { get; }
-    DbSet<MailTemplate> MailTemplates { get; }
+    DbSet<Mails> Mails { get; }
 
     // YENİ EKLENEN KISIM:
     DbSet<AdminProfile> AdminProfiles { get; }

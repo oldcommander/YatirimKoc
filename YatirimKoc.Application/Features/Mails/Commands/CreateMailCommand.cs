@@ -1,39 +1,35 @@
 ﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
 using YatirimKoc.Application.Abstractions.Persistence;
 using YatirimKoc.Domain.Entities.Mails;
 
 namespace YatirimKoc.Application.Features.Mails.Commands;
 
-public class CreateMailCommand : IRequest<bool>
+public class CreateMailCommand : IRequest<Guid>
 {
-    public string Email { get; set; } = null!;
+    public string Code { get; set; } = null!;
+    public string Subject { get; set; } = null!;
+    public string BodyHtml { get; set; } = null!;
+    public bool IsActive { get; set; }
 }
 
-public class CreateMailCommandHandler : IRequestHandler<CreateMailCommand, bool>
+public class CreateMailCommandHandler : IRequestHandler<CreateMailCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    public CreateMailCommandHandler(IApplicationDbContext context) { _context = context; }
 
-    public CreateMailCommandHandler(IApplicationDbContext context)
+    public async Task<Guid> Handle(CreateMailCommand request, CancellationToken cancellationToken)
     {
-        _context = context;
-    }
-
-    public async Task<bool> Handle(CreateMailCommand request, CancellationToken cancellationToken)
-    {
-        // Aynı mail adresi zaten var mı kontrolü
-        bool exists = await _context.Mails.AnyAsync(x => x.Email.ToLower() == request.Email.ToLower(), cancellationToken);
-        if (exists) return false;
-
         var mail = new YatirimKoc.Domain.Entities.Mails.Mails
         {
-            Email = request.Email,
-            IsActive = true,
+            Code = request.Code,
+            Subject = request.Subject,
+            BodyHtml = request.BodyHtml,
+            IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Mails.Add(mail);
         await _context.SaveChangesAsync(cancellationToken);
-        return true;
+        return mail.Id;
     }
 }

@@ -12,11 +12,7 @@ public class DeleteMailCommand : IRequest<bool>
 public class DeleteMailCommandHandler : IRequestHandler<DeleteMailCommand, bool>
 {
     private readonly IApplicationDbContext _context;
-
-    public DeleteMailCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public DeleteMailCommandHandler(IApplicationDbContext context) { _context = context; }
 
     public async Task<bool> Handle(DeleteMailCommand request, CancellationToken cancellationToken)
     {

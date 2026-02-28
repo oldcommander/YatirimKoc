@@ -1,6 +1,6 @@
 ﻿namespace YatirimKoc.Domain.Entities.Mails;
 
-public class MailTemplate
+public class Mails
 {
     public Guid Id { get; set; }
 

@@ -1,0 +1,45 @@
+﻿@model YatirimKoc.Application.Features.Mails.Commands.CreateMailCommand
+@{
+    ViewData["Title"] = "Yeni Mail Şablonu";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<div class="fade-in-up">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+        <h2 style="margin:0; font-weight:800; color:#fff;">Yeni Şablon Oluştur</h2>
+        <a asp-action="Index" class="btn-secondary" style="text-decoration:none;"><i class="fas fa-arrow-left me-2"></i> İptal</a>
+    </div>
+
+    <form asp-action="Create" method="post">
+        <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 30px; border-top: 5px solid var(--accent-1);">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Şablon Kodu</label>
+                    <input asp-for="Code" class="input-dark" placeholder="Örn: OTP_Verification" required />
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Durum</label>
+                    <div style="padding-top:10px;">
+                        <label class="d-flex align-items-center" style="cursor:pointer; color:#fff;">
+                            <input asp-for="IsActive" type="checkbox" style="width:20px; height:20px; accent-color:var(--accent-1); margin-right:10px;" checked /> Aktif
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Mail Konusu (Subject)</label>
+                <input asp-for="Subject" class="input-dark" placeholder="Örn: Yatırım Koç - Onay Kodunuz" required />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" style="color:var(--muted); font-size:13px; font-weight:600; text-transform:uppercase;">Mail İçeriği (HTML)</label>
+                <textarea asp-for="BodyHtml" class="input-dark" rows="15" style="font-family:monospace;" required></textarea>
+            </div>
+
+            <div class="text-end pt-3">
+                <button type="submit" class="btn-primary px-5 py-3" style="font-size:16px;">Şablonu Kaydet</button>
+            </div>
+        </div>
+    </form>
+</div>

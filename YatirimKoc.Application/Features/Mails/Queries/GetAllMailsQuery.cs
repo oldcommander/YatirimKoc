@@ -29,20 +29,20 @@ public class GetAllMailsQueryHandler : IRequestHandler<GetAllMailsQuery, Paginat
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var search = request.SearchTerm.ToLower();
-            // Entity'deki alanınız Email veya EmailAddress olabilir. Gerekirse burayı ona göre güncelleyin.
-            query = query.Where(x => x.Email.ToLower().Contains(search));
+            query = query.Where(x => x.Code.ToLower().Contains(search) || x.Subject.ToLower().Contains(search));
         }
 
         var count = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderBy(x => x.Code)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(x => new MailDto
             {
                 Id = x.Id,
-                Email = x.Email,
+                Code = x.Code,
+                Subject = x.Subject,
                 IsActive = x.IsActive,
                 CreatedAt = x.CreatedAt
             }).ToListAsync(cancellationToken);

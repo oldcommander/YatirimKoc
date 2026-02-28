@@ -38,8 +38,9 @@ public class ApplicationDbContext
     // --------------------
     // MAIL
     // --------------------
-    public DbSet<MailTemplate> MailTemplates => Set<MailTemplate>();
+    public DbSet<Mails> Mails => Set<Mails>();
     public DbSet<MailLog> MailLogs => Set<MailLog>();
+
 
     // --------------------
     // RESERVATION & CONTACT

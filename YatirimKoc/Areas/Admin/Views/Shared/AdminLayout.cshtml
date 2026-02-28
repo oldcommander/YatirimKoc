@@ -75,16 +75,6 @@
                         </ul>
                     </li>
 
-                    <li class="has-children @(currentController.ToLower() == "mailtemplates" ? "expanded active" : "")">
-                        <a href="#">
-                            <span class="icon"><i class="fa-solid fa-file-invoice"></i></span>
-                            <span class="label">Mail Yönetimi</span>
-                        </a>
-                        <ul class="submenu">
-                            <li><a asp-area="Admin" asp-controller="MailTemplates" asp-action="Index">Mail Şablonları</a></li>
-                        </ul>
-                    </li>
-
                     <li class="has-children @(currentController.ToLower() == "sitesettings" ? "expanded active" : "")">
                         <a href="#">
                             <span class="icon"><i class="fa-solid fa-cog"></i></span>
@@ -118,7 +108,7 @@
                     <li class="has-children @(currentController.ToLower() == "mails" ? "expanded active" : "")">
                         <a href="#">
                             <span class="icon"><i class="fa-solid fa-calendar"></i></span>
-                            <span class="label">Abone Yönetimi</span>
+                            <span class="label">Mail Yönetimi</span>
                         </a>
                         <ul class="submenu">
                             <li><a asp-area="Admin" asp-controller="Mails" asp-action="Index">Aboneler (Havuz)</a></li>
