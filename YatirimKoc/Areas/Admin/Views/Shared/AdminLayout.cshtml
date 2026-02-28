@@ -84,6 +84,16 @@
                             <li><a asp-area="Admin" asp-controller="SiteSettings" asp-action="Index">Site Ayarları</a></li>
                         </ul>
                     </li>
+
+                    <li class="has-children @(currentController.ToLower() == "contactmessages" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-comment-dots"></i></span>
+                            <span class="label">Mesajlar</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="ContactMessages" asp-action="Index">Tüm Mesajlar</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </nav>

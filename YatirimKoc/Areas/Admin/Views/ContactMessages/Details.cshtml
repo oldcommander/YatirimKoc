@@ -1,0 +1,99 @@
+﻿@using YatirimKoc.Domain.Enums
+@model YatirimKoc.Application.Features.ContactMessages.Dtos.ContactMessageDto
+@{
+    ViewData["Title"] = "Mesaj Detayı";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Mesaj Detayı</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="ContactMessages" asp-action="Index">İletişim Mesajları</a></li>
+        <li class="breadcrumb-item active">Detay</li>
+    </ol>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 font-weight-bold text-primary">@Model.Subject</h5>
+                    <div>
+                        @if (Model.Status == ContactMessageStatus.Replied)
+                        {
+                            <span class="badge bg-success fs-6 px-3 py-2"><i class="fas fa-check-double"></i> Cevaplandı</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info text-dark fs-6 px-3 py-2"><i class="fas fa-envelope-open"></i> Okundu</span>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3 pb-3 border-bottom">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Gönderen</p>
+                            <h6 class="mb-0 fw-bold"><i class="fas fa-user text-secondary me-2"></i>@Model.FullName</h6>
+                        </div>
+                        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                            <p class="mb-1 text-muted small">Tarih</p>
+                            <h6 class="mb-0"><i class="fas fa-calendar-alt text-secondary me-2"></i>@Model.CreatedAt.ToString("dd MMMM yyyy HH:mm")</h6>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4 pb-3 border-bottom">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">E-Posta Adresi</p>
+                            <h6><a href="mailto:@Model.Email" class="text-decoration-none"><i class="fas fa-envelope text-secondary me-2"></i>@Model.Email</a></h6>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Telefon Numarası</p>
+                            <h6>
+                                @if (!string.IsNullOrEmpty(Model.Phone))
+                                {
+                                    <a href="tel:@Model.Phone" class="text-decoration-none text-dark"><i class="fas fa-phone text-secondary me-2"></i>@Model.Phone</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">Belirtilmemiş</span>
+                                }
+                            </h6>
+                        </div>
+                    </div>
+
+                    <div class="message-content bg-light p-4 rounded-3" style="min-height: 150px;">
+                        <p class="mb-1 text-muted small fw-bold text-uppercase">Mesaj İçeriği:</p>
+                        <p class="mb-0 fs-5" style="white-space: pre-line;">@Model.Message</p>
+                    </div>
+                </div>
+                <div class="card-footer bg-white py-3 d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Listeye Dön
+                    </a>
+
+                    <div class="d-flex gap-2">
+                        <a href="mailto:@Model.Email?subject=RE: @Model.Subject" class="btn btn-primary">
+                            <i class="fas fa-reply me-1"></i> E-Posta ile Yanıtla
+                        </a>
+
+                        @if (Model.Status != ContactMessageStatus.Replied)
+                        {
+                            <form asp-action="MarkAsReplied" asp-route-id="@Model.Id" method="post">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i> Cevaplandı Olarak İşaretle
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
