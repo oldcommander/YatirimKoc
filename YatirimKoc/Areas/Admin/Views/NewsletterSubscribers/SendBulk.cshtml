@@ -1,0 +1,264 @@
+﻿@{
+    ViewData["Title"] = "Toplu Bülten Gönder";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* Select2 Karanlık Tema Uyarlaması */
+    .select2-container--default .select2-selection--single {
+        background-color: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid var(--glass-border) !important;
+        height: 45px !important;
+        display: flex;
+        align-items: center;
+        color: #fff !important;
+        border-radius: 8px !important;
+    }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #fff !important;
+            padding-left: 15px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 43px !important;
+        }
+
+    .select2-dropdown {
+        background-color: #1e293b !important;
+        color: #fff !important;
+        border: 1px solid var(--accent-1) !important;
+        border-radius: 8px !important;
+    }
+
+    .select2-search__field {
+        background-color: #0f172a !important;
+        color: #fff !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 4px !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--accent-1) !important;
+    }
+
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: rgba(139, 92, 246, 0.2) !important;
+    }
+</style>
+
+<div class="fade-in-up">
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 25px; margin-bottom: 30px; border-left: 5px solid #8b5cf6;">
+        <div style="display:flex; align-items:center; gap: 15px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(139, 92, 246, 0.1); display:flex; align-items:center; justify-content:center; color: #8b5cf6; border: 1px solid var(--glass-border);">
+                <i class="fa-solid fa-paper-plane fa-lg"></i>
+            </div>
+            <div>
+                <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px;">Bülten & Duyuru Merkezi</h2>
+                <p style="color: var(--muted); margin: 5px 0 0 0;">Abonelerinize ilan fırsatları veya özel gün kutlamaları gönderin.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 30px; max-width: 800px; margin: 0 auto;">
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; border-radius: 10px;">
+                <i class="fa-solid fa-triangle-exclamation mr-2"></i> @TempData["Error"]
+            </div>
+        }
+
+        <form asp-action="SendBulk" method="post" id="bulkMailForm">
+
+            <div class="form-group mb-4">
+                <label style="font-size:13px; color: var(--muted); margin-bottom: 8px; display:block;">
+                    <i class="fa-solid fa-layer-group mr-1" style="color: var(--accent-1);"></i> Şablon Seçimi
+                </label>
+                <select id="templateSelect" name="templateCode" class="input-dark w-100" required>
+                    <option value="">-- Lütfen Şablon Seçin --</option>
+                    @if (ViewBag.Templates != null)
+                    {
+                        foreach (var template in (List<YatirimKoc.Application.Features.Mails.Dtos.MailDto>)ViewBag.Templates)
+                        {
+                            <option value="@template.Code">@template.Code - @template.Subject</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div id="systemWarningBlock" class="alert mt-4" style="display:none; background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; color: #fca5a5; border-radius: 12px;">
+                <h5 style="color:#ef4444; font-weight:700;"><i class="fa-solid fa-ban mr-2"></i> Bu Şablon Kullanılamaz!</h5>
+                <p style="margin:0; font-size:14px;">Seçmiş olduğunuz bu şablon (OTP, Rezervasyon vs.) sistem tarafından otomatik olarak gönderilmek üzere tasarlanmıştır. Güvenlik gereği toplu bülten olarak <b>gönderilemez</b>.</p>
+            </div>
+
+            <div id="marketingFormBlock" class="mt-4 p-4" style="display:none; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px dashed var(--accent-2);">
+                <h5 class="mb-4 text-white" style="font-weight:700;"><i class="fa-solid fa-house-signal text-warning mr-2"></i> İlan Tanıtım Maili</h5>
+
+                <div class="form-group mb-4">
+                    <label style="font-size:13px; color: var(--muted); margin-bottom: 8px; display:block;">Tanıtılacak İlanı Seçin</label>
+                    <select id="listingSelect" name="selectedListingId" class="input-dark w-100">
+                        <option value="">-- İlan Ara veya Seç --</option>
+                        @if (ViewBag.Listings != null)
+                        {
+                            foreach (var listing in ViewBag.Listings)
+                            {
+                                <option value="@listing.Id">@listing.Title (@listing.Price.ToString("C0") ₺)</option>
+                            }
+                        }
+                    </select>
+                    <small style="color:var(--muted); opacity:0.6; display:block; margin-top:5px;">İlanın resmi, fiyatı, konumu ve özellikleri maile <b>otomatik olarak eklenecektir</b>.</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label style="font-size:13px; color: var(--muted); margin-bottom: 8px; display:block;">Mail Başlığı (Konu)</label>
+                    <input type="text" id="listingTitleInput" name="placeholders[ListingTitle]" class="input-dark w-100" placeholder="Örn: Muhteşem Lüks Daire!" />
+                </div>
+            </div>
+
+            <div id="occasionFormBlock" class="mt-4 p-4" style="display:none; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px dashed var(--accent-1);">
+                <h5 class="mb-4 text-white" style="font-weight:700;"><i class="fa-solid fa-bullhorn text-info mr-2"></i> Duyuru & Kutlama Maili</h5>
+
+                <div class="form-group mb-4">
+                    <label style="font-size:13px; color: var(--muted); margin-bottom: 8px; display:block;">Mail Konusu (Gelen Kutusunda Görünecek)</label>
+                    <input type="text" id="occasionSubjectInput" name="placeholders[Subject]" class="input-dark w-100" placeholder="Örn: 29 Ekim Cumhuriyet Bayramımız Kutlu Olsun!" />
+                </div>
+
+                <div class="form-group mb-4">
+                    <label style="font-size:13px; color: var(--muted); margin-bottom: 8px; display:block;">Mail İçi Ana Başlık (Altın Rengi Büyük Yazı)</label>
+                    <input type="text" id="occasionTitleInput" name="placeholders[OccasionTitle]" class="input-dark w-100" placeholder="Örn: Cumhuriyetimizin Yeni Yaşı Kutlu Olsun!" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label style="font-size:13px; color: var(--muted); margin-bottom: 8px; display:block;">Mesajınız</label>
+                    <textarea id="occasionMessageInput" name="placeholders[OccasionMessage]" class="input-dark w-100" rows="5" placeholder="Sayın Yatırımcılarımız, bu anlamlı günde... (Alt satıra geçmek için <br> kullanabilirsiniz)"></textarea>
+                </div>
+            </div>
+
+            <hr style="border-color: rgba(255,255,255,0.05); margin: 25px 0;" />
+
+            <div class="d-flex justify-content-end gap-3">
+                <a asp-action="Index" class="btn-secondary" style="text-decoration:none;">İptal Et</a>
+                <button type="button" id="submitBtn" class="btn-primary" onclick="confirmSend()" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); display:none;">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Abonelere Gönder
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            // Select2 Başlatma
+            $('#listingSelect').select2({
+                placeholder: "-- İlan Ara veya Seç --",
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Başarı Durumu Kontrolü (Post sonrası)
+            @if (TempData["Success"] != null)
+            {
+                    <text>
+                    Swal.fire({
+                        title: 'Başarılı!',
+                        text: "@TempData["Success"]",
+                        icon: 'success',
+                        background: '#1e293b',
+                        color: '#fff',
+                        showCancelButton: true,
+                        confirmButtonColor: '#8b5cf6',
+                        cancelButtonColor: '#475569',
+                        confirmButtonText: 'Logları Görüntüle',
+                        cancelButtonText: 'Kapat'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '@Url.Action("MailLogs", "NewsletterSubscribers")';
+                        } else {
+                            // Formu sıfırla
+                            document.getElementById('bulkMailForm').reset();
+                            $('#listingSelect').val(null).trigger('change');
+                            $('#templateSelect').val('').trigger('change');
+                        }
+                    });
+                    </text>
+            }
+        });
+
+        // Şablon Değişimi Dinleyicisi
+        document.getElementById('templateSelect').addEventListener('change', function() {
+            var selectedCode = this.value;
+            var warningBlock = document.getElementById('systemWarningBlock');
+            var marketingBlock = document.getElementById('marketingFormBlock');
+            var occasionBlock = document.getElementById('occasionFormBlock');
+            var submitBtn = document.getElementById('submitBtn');
+
+            // Sıfırla
+            warningBlock.style.display = 'none';
+            marketingBlock.style.display = 'none';
+            occasionBlock.style.display = 'none';
+            submitBtn.style.display = 'none';
+
+            document.getElementById('listingSelect').required = false;
+            document.getElementById('listingTitleInput').required = false;
+            document.getElementById('occasionSubjectInput').required = false;
+            document.getElementById('occasionTitleInput').required = false;
+            document.getElementById('occasionMessageInput').required = false;
+
+            if(!selectedCode) return;
+
+            if (selectedCode === 'Marketing_Hot_Listing') {
+                marketingBlock.style.display = 'block';
+                submitBtn.style.display = 'flex';
+                document.getElementById('listingSelect').required = true;
+                document.getElementById('listingTitleInput').required = true;
+            } else if (selectedCode === 'Newsletter_Special_Occasion') {
+                occasionBlock.style.display = 'block';
+                submitBtn.style.display = 'flex';
+                document.getElementById('occasionSubjectInput').required = true;
+                document.getElementById('occasionTitleInput').required = true;
+                document.getElementById('occasionMessageInput').required = true;
+            } else {
+                warningBlock.style.display = 'block';
+            }
+        });
+
+        function confirmSend() {
+            var form = document.getElementById('bulkMailForm');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu e-posta tüm aktif abonelerinize gönderilecektir. İşlem biraz sürebilir.",
+                icon: 'question',
+                background: '#1e293b',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#8b5cf6',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Evet, Başlat!',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Gönderiliyor...',
+                        text: 'Mailler iletiliyor, lütfen bekleyiniz.',
+                        background: '#1e293b',
+                        color: '#fff',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading() }
+                    });
+                    form.submit();
+                }
+            });
+        }
+    </script>
+}

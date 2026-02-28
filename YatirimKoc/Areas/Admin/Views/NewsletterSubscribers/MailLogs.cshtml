@@ -1,0 +1,145 @@
+﻿@model YatirimKoc.Application.Common.Models.PaginatedList<YatirimKoc.Application.Features.NewsletterSubscribers.Dtos.MailLogDto>
+@{
+    ViewData["Title"] = "Mail Logları";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+}
+
+<div class="fade-in-up">
+    <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 25px; margin-bottom: 30px; border-left: 5px solid var(--accent-1);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h2 style="margin:0; font-weight:800;">Mail Gönderim Logları</h2>
+                <p style="color: var(--muted); margin: 5px 0 0 0;">Toplam @Model.TotalCount kayıt bulundu.</p>
+            </div>
+            <a asp-action="SendBulk" class="btn-primary" style="text-decoration:none; background:var(--accent-1);">
+                <i class="fa-solid fa-plus mr-2"></i> Yeni Gönderim
+            </a>
+        </div>
+
+        <hr style="border-color: var(--glass-border); margin: 20px 0;" />
+
+        <form method="get" class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" class="input-dark" placeholder="Alıcı veya Konu Ara...">
+            <select name="isSuccess" class="input-dark">
+                <option value="">Tüm Durumlar</option>
+                <option value="true" selected="@(ViewBag.IsSuccess == true)">Başarılı</option>
+                <option value="false" selected="@(ViewBag.IsSuccess == false)">Hatalı</option>
+            </select>
+            <button type="submit" class="btn-primary" style="background:var(--accent-2);"><i class="fa-solid fa-filter"></i> Filtrele</button>
+        </form>
+    </div>
+
+    <div class="glass-panel" style="padding: 10px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width:900px;">
+            <thead>
+                <tr style="color: var(--muted); font-size:12px; text-transform:uppercase; border-bottom: 1px solid var(--glass-border);">
+                    <th style="padding: 20px; text-align:left;">Tarih</th>
+                    <th style="padding: 20px; text-align:left;">Alıcı</th>
+                    <th style="padding: 20px; text-align:left;">Konu</th>
+                    <th style="padding: 20px; text-align:left;">Şablon</th>
+                    <th style="padding: 20px; text-align:center;">Durum</th>
+                    <th style="padding: 20px; text-align:right;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model.Items)
+                {
+                    <tr class="table-row-hover" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 15px 20px; font-size:13px; color:#fff;">@log.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td style="padding: 15px 20px; font-weight:600; color:var(--accent-2);">@log.ToEmail</td>
+                        <td style="padding: 15px 20px; color:var(--muted); font-size:13px;">@log.Subject</td>
+                        <td style="padding: 15px 20px;"><code style="color:var(--accent-1); background:rgba(139, 92, 246, 0.1); padding:2px 6px; border-radius:4px;">@log.TemplateCode</code></td>
+                        <td style="padding: 15px 20px; text-align:center;">
+                            @if (log.IsSuccess)
+                            {
+                                <span class="status-pill status-active">Başarılı</span>
+                            }
+                            else
+                            {
+
+                                <span class="status-pill status-passive">Hata</span>
+                            }
+                        </td>
+                        <td style="padding: 15px 20px; text-align:right;">
+                            <button onclick="showLogDetail('@log.Id', '@log.Subject')" class="action-icon" style="color:var(--accent-2); border:none; cursor:pointer;" title="Detaylar">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div style="display:flex; justify-content:center; gap:10px; margin: 20px 0;">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <a asp-action="MailLogs" asp-route-pageNumber="@i" asp-route-searchTerm="@ViewBag.SearchTerm" asp-route-isSuccess="@ViewBag.IsSuccess"
+                       class="action-icon @(Model.PageNumber == i ? "active-page" : "")" style="width:35px; height:35px; text-decoration:none;">@i</a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function showLogDetail(id, subject) {
+        $.get('@Url.Action("GetMailLogDetail", "NewsletterSubscribers")/' + id, function(res) {
+            let detailHtml = `<div style="text-align:left; font-size:14px;">
+                <p><b>Tarih:</b> ${res.date}</p>
+                <p><b>Durum:</b> ${res.success ? '<span style="color:#10b981">Başarılı</span>' : '<span style="color:#ef4444">Hatalı</span>'}</p>
+                ${!res.success ? `<p><b>Hata Mesajı:</b> <br><small style="color:#fca5a5">${res.error}</small></p>` : '<p>Mail başarıyla sunucuya teslim edildi.</p>'}
+            </div>`;
+
+            Swal.fire({
+                title: subject,
+                html: detailHtml,
+                background: '#1e293b',
+                color: '#fff',
+                confirmButtonColor: '#8b5cf6'
+            });
+        });
+    }
+</script>
+
+<style>
+    .status-pill {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-passive {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .action-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.03);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        border: 1px solid var(--glass-border);
+    }
+
+    .active-page {
+        background: var(--accent-1) !important;
+        color: #fff !important;
+    }
+
+    .table-row-hover:hover {
+        background: rgba(255,255,255,0.02);
+    }
+</style>

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using YatirimKoc.Application.Abstractions.Persistence;
 using YatirimKoc.Application.Common.Models;
+using System.Linq;
 using YatirimKoc.Application.Features.Mails.Dtos;
 
 namespace YatirimKoc.Application.Features.Mails.Queries;
