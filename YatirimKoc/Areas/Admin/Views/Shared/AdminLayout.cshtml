@@ -1,212 +1,255 @@
-﻿<!DOCTYPE html>
+﻿@using YatirimKoc.Domain.Entities.Identity
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<User> UserManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var roles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var roleName = roles.FirstOrDefault() ?? "Admin";
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>@ViewData["Title"] - Yatırım Koç Admin</title>
-    
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <link href="~/css/admin.css" rel="stylesheet" />
-    <link href="~/css/bootstrap.min.css" rel="stylesheet" />
-    
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --panel-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --accent-1: #8b5cf6;
-            --accent-2: #38bdf8;
-            --muted: #94a3b8;
-            --radius-lg: 16px;
-            --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
-            --gradient-primary: linear-gradient(135deg, #8b5cf6, #3b82f6);
-        }
-        
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: #f8fafc; }
-        .glass-panel { background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
-        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
-        @@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Layout CSS Ezmeleri */
-        .sb-topnav { background: rgba(15, 23, 42, 0.8) !important; backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); }
-        .sb-sidenav { background: rgba(15, 23, 42, 0.95) !important; border-right: 1px solid var(--glass-border); }
-        .nav-link { color: #cbd5e1 !important; transition: all 0.3s; margin: 4px 10px; border-radius: 8px; }
-        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.05); color: #fff !important; transform: translateX(5px); }
-        .sb-nav-link-icon { color: var(--accent-1) !important; }
-        
-        .btn-primary { background: var(--gradient-primary); border: none; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; transition: all 0.3s; text-decoration:none; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-glow); color: #fff; }
-        .btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; transition: all 0.3s; text-decoration:none; }
-        .btn-secondary:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .input-dark { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: #fff; padding: 12px 15px; border-radius: 8px; transition: all 0.3s; }
-        .input-dark:focus { outline: none; border-color: var(--accent-1); background: rgba(0,0,0,0.4); box-shadow: inset 0 0 0 1px var(--accent-1); }
-        
-        /* Özel Logout Modal Css */
-        .logout-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .logout-modal-overlay.active { display: flex !important; }
-        .logout-modal-box { width: 400px; padding: 35px 30px; border-radius: 20px; text-align: center; transform: scale(0.9); opacity: 0; transition: all 0.3s ease; border-top: 5px solid #f59e0b; }
-        .logout-modal-overlay.active .logout-modal-box { transform: scale(1); opacity: 1; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - YatırımKoç Yönetim Paneli</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="sb-nav-fixed">
-    
-    <nav class="sb-topnav navbar navbar-expand navbar-dark">
-        <a class="navbar-brand ps-3 fw-bold" asp-area="Admin" asp-controller="Dashboard" asp-action="Index" style="letter-spacing: 1px;">
-            <i class="fa-solid fa-chart-pie me-2" style="color:var(--accent-1)"></i>YATIRIM<span style="color:var(--accent-2)">KOÇ</span>
-        </a>
-        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars text-white"></i></button>
-        
-        <div class="d-none d-md-inline-block ms-auto me-0 me-md-3 my-2 my-md-0"></div>
-        
-        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle d-flex align-items-center" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="~/images/default-avatar.png" alt="Admin" style="width:32px; height:32px; border-radius:50%; object-fit:cover; margin-right:8px; border:2px solid var(--accent-1);" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" />
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow-lg" aria-labelledby="navbarDropdown" style="background:var(--panel-bg); backdrop-filter:blur(10px); border:1px solid var(--glass-border); border-radius:12px;">
-                    <li><a class="dropdown-item py-2" href="#!"><i class="fas fa-user-circle me-2 text-secondary"></i> Profilim</a></li>
-                    <li><a class="dropdown-item py-2" asp-area="Admin" asp-controller="SiteSettings" asp-action="Index"><i class="fas fa-cog me-2 text-secondary"></i> Ayarlar</a></li>
-                    <li><hr class="dropdown-divider" style="border-color:var(--glass-border);" /></li>
-                    <li><button type="button" class="dropdown-item text-danger fw-bold py-2" onclick="openLogoutModal()"><i class="fas fa-sign-out-alt me-2"></i> Çıkış Yap</button></li>
+<body>
+    <div class="bg-mesh"></div>
+
+    <div class="app">
+        <nav class="sidebar">
+
+            <div class="brand">
+                <div class="logo"><i class="fa-solid fa-chart-line"></i></div>
+                <div class="title">YatırımKoç</div>
+            </div>
+
+            <div class="sidebar-scroll">
+                <ul class="nav">
+                    <li>
+                        <a href="/admin/dashboard" class="@(currentController.ToLower() == "dashboard" ? "active" : "")">
+                            <span class="icon"><i class="fa-solid fa-house-chimney"></i></span>
+                            <span class="label">Genel Bakış</span>
+                        </a>
+                    </li>
+
+                    @if (User.IsInRole(RoleConstants.SuperAdmin))
+                    {
+                        <li class="has-children @(currentController.ToLower() == "users" ? "expanded active" : "")">
+                            <a href="#">
+                                <span class="icon"><i class="fa-solid fa-users"></i></span>
+                                <span class="label">Kullanıcılar</span>
+                            </a>
+                            <ul class="submenu">
+                                <li><a asp-area="Admin" asp-controller="Users" asp-action="Index" class="@(currentAction.ToLower() == "index" && currentController.ToLower() == "users" ? "text-glow" : "")">Tüm Kullanıcılar</a></li>
+                                <li><a asp-area="Admin" asp-controller="Users" asp-action="Create" class="@(currentAction.ToLower() == "create" && currentController.ToLower() == "users" ? "text-glow" : "")">Yeni Danışman Ekle</a></li>
+                            </ul>
+                        </li>
+                    }
+
+                    <li class="has-children @(currentController.ToLower() == "listings" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-building"></i></span>
+                            <span class="label">İlanlar</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="Listings" asp-action="Index">Tüm İlanlar</a></li>
+                            <li><a asp-area="Admin" asp-controller="Listings" asp-action="CreateWizard" class="text-glow">Yeni İlan Ekle</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-children @(currentController.ToLower() == "mailtemplates" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-file-invoice"></i></span>
+                            <span class="label">Mail Yönetimi</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="MailTemplates" asp-action="Index">Mail Şablonları</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-children @(currentController.ToLower() == "sitesettings" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-cog"></i></span>
+                            <span class="label">Ayarlar</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="SiteSettings" asp-action="Index">Site Ayarları</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-children @(currentController.ToLower() == "contactmessages" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-comment-dots"></i></span>
+                            <span class="label">Mesajlar</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="ContactMessages" asp-action="Index">Tüm Mesajlar</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-children @(currentController.ToLower() == "reservations" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-calendar"></i></span>
+                            <span class="label">Rezervasyonlar</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="Reservations" asp-action="Index">Tüm Rezervasyonlar</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-children @(currentController.ToLower() == "mails" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-calendar"></i></span>
+                            <span class="label">Abone Yönetimi</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="Mails" asp-action="Index">Aboneler (Havuz)</a></li>
+                        </ul>
+                    </li>
+                    
                 </ul>
-            </li>
-        </ul>
-    </nav>
-    
-    <div id="layoutSidenav">
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav mt-4">
-                        <div class="sb-sidenav-menu-heading text-uppercase" style="font-size:11px; letter-spacing:1px; color:var(--muted); margin-left:10px;">Ana Menü</div>
-                        
-                        <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            Dashboard
-                        </a>
-                        
-                        <div class="sb-sidenav-menu-heading text-uppercase mt-3" style="font-size:11px; letter-spacing:1px; color:var(--muted); margin-left:10px;">Operasyonlar</div>
+            </div>
+        </nav>
 
-                        <a class="nav-link" asp-area="Admin" asp-controller="Reservations" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-calendar-check"></i></div>
-                            Randevular
-                        </a>
-
-                        <a class="nav-link" asp-area="Admin" asp-controller="ContactMessages" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-envelope"></i></div>
-                            İletişim Mesajları
-                        </a>
-                        
-                        <a class="nav-link" asp-area="Admin" asp-controller="Listings" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
-                            İlan Yönetimi
-                        </a>
-
-                        <div class="sb-sidenav-menu-heading text-uppercase mt-3" style="font-size:11px; letter-spacing:1px; color:var(--muted); margin-left:10px;">Sistem Yönetimi</div>
-                        
-                        <a class="nav-link" asp-area="Admin" asp-controller="MailTemplates" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-file-invoice"></i></div>
-                            Mail Şablonları
-                        </a>
-
-                        <a class="nav-link" asp-area="Admin" asp-controller="Users" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                            Kullanıcılar
-                        </a>
-                        
-                        <a class="nav-link" asp-area="Admin" asp-controller="SiteSettings" asp-action="Index">
-                            <div class="sb-nav-link-icon"><i class="fas fa-cogs"></i></div>
-                            Site Ayarları
-                        </a>
+        <main class="main">
+            <header class="topbar glass-panel">
+                <div class="left">
+                    <button class="hamburger"><i class="fa-solid fa-bars-staggered"></i></button>
+                    <div class="searchwide">
+                        <i class="fa-solid fa-magnifying-glass" style="color:var(--muted); margin-right:10px;"></i>
+                        <input type="text" placeholder="Panelde ara..." />
                     </div>
                 </div>
-                <div class="sb-sidenav-footer" style="background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
-                    <div class="small text-muted">Giriş Yapılan Hesap:</div>
-                    <span style="color:var(--accent-2); font-weight:600;">Sistem Yöneticisi</span>
-                </div>
-            </nav>
-        </div>
-        
-        <div id="layoutSidenav_content">
-            <main class="p-4">
-                @RenderBody()
-            </main>
-            <footer class="py-4 mt-auto" style="background: rgba(15, 23, 42, 0.8); border-top: 1px solid var(--glass-border);">
-                <div class="container-fluid px-4">
-                    <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright &copy; Yatırım Koç @DateTime.Now.Year</div>
-                        <div>
-                            <a href="#" style="color:var(--muted); text-decoration:none; margin-right:10px;">Gizlilik Politikası</a>
-                            &middot;
-                            <a href="#" style="color:var(--muted); text-decoration:none; margin-left:10px;">Şartlar ve Koşullar</a>
+
+                <div class="right">
+                    <button class="icon-btn" id="logoutBtn" title="Çıkış Yap">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <div class="user-name">@currentUser?.FirstName @currentUser?.LastName</div>
+                            <div class="user-role">@roleName</div>
+                        </div>
+
+                        <div class="avatar">
+                            @if (!string.IsNullOrEmpty(currentUser?.AdminProfile?.ProfileImageUrl))
+                            {
+                                <img src="@currentUser.AdminProfile.ProfileImageUrl" alt="Profile" />
+                            }
+                            else
+                            {
+                                <div class="avatar-placeholder"><i class="fa-solid fa-user-astronaut"></i></div>
+                            }
                         </div>
                     </div>
                 </div>
-            </footer>
-        </div>
+            </header>
+
+            <div class="content fade-in-up">
+                @RenderBody()
+            </div>
+        </main>
     </div>
 
-    <div id="customLogoutModal" class="logout-modal-overlay">
-        <div class="logout-modal-box glass-panel">
-            <div style="width: 80px; height: 80px; background: rgba(245, 158, 11, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #f59e0b; font-size: 35px; box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            </div>
-            
-            <h3 style="color:#fff; margin-bottom:10px; font-weight:700;">Çıkış Yapıyorsunuz</h3>
-            <p style="color:var(--muted); font-size:15px; margin-bottom:25px;">Oturumunuzu kapatmak istediğinize emin misiniz?</p>
-            
-            <div style="display:flex; justify-content:center; gap:15px;">
-                <button type="button" class="btn-secondary" onclick="closeLogoutModal()" style="flex: 1;">Vazgeç</button>
-                <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post" style="flex: 1; margin:0;">
-                    <button type="submit" class="btn-primary" style="width:100%; justify-content:center; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">
-                        Evet, Çıkış Yap
-                    </button>
+    <div id="logoutModal" class="modal-overlay" style="display:none;">
+        <div class="modal-box glass-panel">
+            <h3 style="color:#ff4d4d; display:flex; align-items:center; gap:10px; justify-content:center;">
+                <div class="icon-circle-danger" style="background:rgba(239,68,68,0.1); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                Çıkış Yap
+            </h3>
+            <p style="margin: 15px 0; color: var(--muted); text-align:center;">Oturumu kapatmak istediğinize emin misiniz? Kaydedilmemiş verileriniz kaybolabilir.</p>
+
+            <div style="display:flex;justify-content:center;gap:15px; margin-top:25px;">
+                <button id="cancelLogoutBtn" class="btn-secondary" style="flex:1;">Vazgeç</button>
+                <form method="post" asp-area="Admin" asp-controller="Auth" asp-action="Logout" style="margin:0; flex:1;">
+                    <button type="submit" class="btn-primary" style="width:100%; background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">Evet, Çıkış Yap</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        const logoutModalOverlay = document.getElementById('customLogoutModal');
-        
-        function openLogoutModal() {
-            logoutModalOverlay.style.display = 'flex';
-            setTimeout(() => logoutModalOverlay.classList.add('active'), 10);
-        }
-        
-        function closeLogoutModal() {
-            const logoutBox = logoutModalOverlay.querySelector('.logout-modal-box');
-            logoutBox.style.transform = 'scale(0.9)';
-            logoutBox.style.opacity = '0';
-            setTimeout(() => {
-                logoutModalOverlay.classList.remove('active');
-                logoutModalOverlay.style.display = 'none';
-                
-                setTimeout(() => {
-                    logoutBox.style.transform = '';
-                    logoutBox.style.opacity = '';
-                }, 50);
-            }, 300);
-        }
+    <button id="scrollTopBtn" class="glow-effect">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
 
-        window.addEventListener('DOMContentLoaded', event => {
-            const sidebarToggle = document.body.querySelector('#sidebarToggle');
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', event => {
-                    event.preventDefault();
-                    document.body.classList.toggle('sb-sidenav-toggled');
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.hamburger');
+            const collapseBreakpoint = 900;
+
+            hamburger.addEventListener('click', () => {
+                if (window.innerWidth <= collapseBreakpoint) {
+                    sidebar.classList.toggle('open');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                }
+            });
+
+            document.querySelectorAll('.has-children > a').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const parent = this.parentElement;
+
+                    document.querySelectorAll('.has-children').forEach(item => {
+                        if (item !== parent) item.classList.remove('expanded');
+                    });
+
+                    parent.classList.toggle('expanded');
+                });
+            });
+
+            const scrollBtn = document.getElementById("scrollTopBtn");
+            window.addEventListener("scroll", () => {
+                if (window.scrollY > 200) {
+                    scrollBtn.classList.add("show");
+                } else {
+                    scrollBtn.classList.remove("show");
+                }
+            });
+
+            scrollBtn.addEventListener("click", () => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            const logoutBtn = document.getElementById('logoutBtn');
+            const logoutModal = document.getElementById('logoutModal');
+            const cancelLogout = document.getElementById('cancelLogoutBtn');
+
+            if(logoutBtn) logoutBtn.addEventListener('click', () => logoutModal.style.display = 'flex');
+            if(cancelLogout) cancelLogout.addEventListener('click', () => logoutModal.style.display = 'none');
+
+            if(logoutModal){
+                logoutModal.addEventListener('click', (e) => {
+                    if (e.target === logoutModal) logoutModal.style.display = 'none';
                 });
             }
         });
     </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>
