@@ -24,16 +24,18 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </head>
 <body>
     <div class="bg-mesh"></div>
 
     <div class="app">
         <nav class="sidebar">
+
             <div class="brand">
                 <div class="logo"><i class="fa-solid fa-chart-line"></i></div>
                 <div class="title">YatırımKoç</div>
@@ -48,16 +50,19 @@
                         </a>
                     </li>
 
-                    <li class="has-children">
-                        <a href="#">
-                            <span class="icon"><i class="fa-solid fa-users"></i></span>
-                            <span class="label">Kullanıcılar</span>
-                        </a>
-                        <ul class="submenu">
-                            <li><a href="/admin/user/index">Tüm Kullanıcılar</a></li>
-                            <li><a href="/admin/user/create">Yeni Kullanıcı</a></li>
-                        </ul>
-                    </li>
+                    @if (User.IsInRole(RoleConstants.SuperAdmin))
+                    {
+                        <li class="has-children @(currentController.ToLower() == "users" ? "expanded active" : "")">
+                            <a href="#">
+                                <span class="icon"><i class="fa-solid fa-users"></i></span>
+                                <span class="label">Kullanıcılar</span>
+                            </a>
+                            <ul class="submenu">
+                                <li><a asp-area="Admin" asp-controller="Users" asp-action="Index" class="@(currentAction.ToLower() == "index" && currentController.ToLower() == "users" ? "text-glow" : "")">Tüm Kullanıcılar</a></li>
+                                <li><a asp-area="Admin" asp-controller="Users" asp-action="Create" class="@(currentAction.ToLower() == "create" && currentController.ToLower() == "users" ? "text-glow" : "")">Yeni Danışman Ekle</a></li>
+                            </ul>
+                        </li>
+                    }
 
                     <li class="has-children @(currentController.ToLower() == "listings" ? "expanded active" : "")">
                         <a href="#">
@@ -65,18 +70,18 @@
                             <span class="label">İlanlar</span>
                         </a>
                         <ul class="submenu">
-                            <li><a href="/admin/listings">Tüm İlanlar</a></li>
-                            <li><a href="/admin/listings/createwizard" class="text-glow">Yeni İlan Ekle</a></li>
+                            <li><a asp-area="Admin" asp-controller="Listings" asp-action="Index">Tüm İlanlar</a></li>
+                            <li><a asp-area="Admin" asp-controller="Listings" asp-action="CreateWizard" class="text-glow">Yeni İlan Ekle</a></li>
                         </ul>
                     </li>
 
-                    <li class="has-children">
+                    <li class="has-children @(currentController.ToLower() == "sitesettings" ? "expanded active" : "")">
                         <a href="#">
                             <span class="icon"><i class="fa-solid fa-cog"></i></span>
                             <span class="label">Ayarlar</span>
                         </a>
                         <ul class="submenu">
-                            <li><a href="/admin/sitesettings">Site Ayarları</a></li>
+                            <li><a asp-area="Admin" asp-controller="SiteSettings" asp-action="Index">Site Ayarları</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -100,16 +105,16 @@
 
                     <div id="logoutModal" class="modal-overlay" style="display:none;">
                         <div class="modal-box glass-panel">
-                            <h3 style="color:#ff4d4d; display:flex; align-items:center; gap:10px;">
-                                <div class="icon-circle-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <h3 style="color:#ff4d4d; display:flex; align-items:center; gap:10px; justify-content:center;">
+                                <div class="icon-circle-danger" style="background:rgba(239,68,68,0.1); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-triangle-exclamation"></i></div>
                                 Çıkış Yap
                             </h3>
-                            <p style="margin: 15px 0; color: var(--muted);">Oturumu kapatmak istediğinize emin misiniz? Kaydedilmemiş verileriniz kaybolabilir.</p>
+                            <p style="margin: 15px 0; color: var(--muted); text-align:center;">Oturumu kapatmak istediğinize emin misiniz? Kaydedilmemiş verileriniz kaybolabilir.</p>
 
-                            <div style="display:flex;justify-content:flex-end;gap:10px; margin-top:25px;">
-                                <button id="cancelLogoutBtn" class="btn-secondary">Vazgeç</button>
-                                <form method="post" asp-controller="Login" asp-action="Logout" style="margin:0;">
-                                    <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">Evet, Çıkış Yap</button>
+                            <div style="display:flex;justify-content:center;gap:15px; margin-top:25px;">
+                                <button id="cancelLogoutBtn" class="btn-secondary" style="flex:1;">Vazgeç</button>
+                                <form method="post" asp-area="Admin" asp-controller="Auth" asp-action="Logout" style="margin:0; flex:1;">
+                                    <button type="submit" class="btn-primary" style="width:100%; background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">Evet, Çıkış Yap</button>
                                 </form>
                             </div>
                         </div>

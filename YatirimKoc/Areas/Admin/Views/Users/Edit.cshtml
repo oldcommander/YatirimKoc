@@ -1,0 +1,152 @@
+﻿@using YatirimKoc.Domain.Entities.Identity
+@model YatirimKoc.Application.Features.Users.Commands.UpdateUserCommand
+@{
+    ViewData["Title"] = "Danışman Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
+    var avatarImage = ViewBag.ProfileImageUrl ?? "/img/placeholder-avatar.jpg";
+}
+
+<div class="fade-in-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 style="margin:0; font-weight:800;">Profili Düzenle</h2>
+            <p style="color: var(--muted); margin: 5px 0 0 0;">@Model.FirstName @Model.LastName adlı kullanıcının bilgilerini güncelliyorsunuz.</p>
+        </div>
+        <a asp-action="Index" class="btn-secondary" style="text-decoration:none;">
+            <i class="fa-solid fa-arrow-left"></i> Listeye Dön
+        </a>
+    </div>
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="glass-panel mb-4" style="padding: 25px; border-radius: var(--radius-lg); border-left: 5px solid var(--accent-1);">
+            <div class="row align-items-center">
+                <div class="col-lg-2 col-md-3 text-center mb-3 mb-md-0">
+                    <div style="position:relative; width:130px; height:130px; margin:0 auto; border-radius:50%; border:3px solid var(--accent-1); overflow:hidden; cursor:pointer; box-shadow: var(--shadow-glow);" onclick="document.getElementById('profileImageInput').click();">
+                        <img id="avatarPreview" src="@avatarImage" onerror="this.src='https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'" style="width:100%; height:100%; object-fit:cover;" />
+                        <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; font-size:12px; padding:6px 0; transition:0.3s;" class="upload-text">
+                            <i class="fa-solid fa-camera"></i> Değiştir
+                        </div>
+                    </div>
+                    <input asp-for="ProfileImage" type="file" id="profileImageInput" style="display:none;" accept="image/*" onchange="previewAvatar(event)" />
+                </div>
+
+                <div class="col-lg-10 col-md-9">
+                    <h5 style="color: var(--accent-1); font-weight: 700; margin-bottom: 20px; font-size:15px; border-bottom:1px solid var(--glass-border); padding-bottom:10px;">Temel Bilgiler ve Oturum</h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Ad</label>
+                            <input asp-for="FirstName" class="input-dark" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Soyad</label>
+                            <input asp-for="LastName" class="input-dark" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">E-Posta</label>
+                            <input asp-for="Email" type="email" class="input-dark" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Sistem Rolü</label>
+                            <select asp-for="Role" class="input-dark" required>
+                                <option value="@RoleConstants.Admin">Danışman (Sadece Kendi İlanları)</option>
+                                <option value="@RoleConstants.SuperAdmin">Super Admin (Tam Yetki)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label style="font-size:12px; opacity:0; margin-bottom:5px; display:block;">Boşluk</label>
+                            <div class="form-check form-switch d-flex align-items-center m-0 px-3" style="background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 10px; height: 50px;">
+                                <input class="form-check-input m-0" type="checkbox" asp-for="IsActive" style="width: 40px; height: 20px; cursor:pointer;" id="isActiveSwitch">
+                                <label class="form-check-label text-white mb-0 ms-3" for="isActiveSwitch" style="cursor:pointer; font-weight:600;">Hesap Aktif (Giriş Yapabilir)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel mb-4" style="padding: 25px; border-radius: var(--radius-lg); border-left: 5px solid var(--accent-2);">
+            <h5 style="color: var(--accent-2); font-weight: 700; margin-bottom: 20px; font-size:15px; border-bottom:1px solid var(--glass-border); padding-bottom:10px;">Kurumsal Profil ve İletişim Detayları</h5>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Unvan</label>
+                    <input asp-for="Title" class="input-dark" required />
+                </div>
+                <div class="col-md-3">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Telefon</label>
+                    <input asp-for="Phone" class="input-dark" />
+                </div>
+                <div class="col-md-3">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Yetki Belgesi No</label>
+                    <input asp-for="LicenseNumber" class="input-dark" />
+                </div>
+                <div class="col-md-3">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Deneyim (Yıl)</label>
+                    <input asp-for="ExperienceYear" type="number" class="input-dark" />
+                </div>
+
+                <div class="col-md-6">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Uzmanlık Alanları</label>
+                    <input asp-for="Specialties" class="input-dark" />
+                </div>
+                <div class="col-md-6">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Konuşulan Diller</label>
+                    <input asp-for="SpokenLanguages" class="input-dark" />
+                </div>
+
+                <div class="col-md-12">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Hakkında</label>
+                    <textarea asp-for="Biography" class="input-dark" rows="2"></textarea>
+                </div>
+
+                <div class="col-md-4">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Instagram Bağlantısı</label>
+                    <div style="position:relative;">
+                        <i class="fa-brands fa-instagram" style="position:absolute; left:12px; top:15px; color:var(--muted);"></i>
+                        <input asp-for="InstagramUrl" class="input-dark" style="padding-left:35px;" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">LinkedIn Bağlantısı</label>
+                    <div style="position:relative;">
+                        <i class="fa-brands fa-linkedin" style="position:absolute; left:12px; top:15px; color:var(--muted);"></i>
+                        <input asp-for="LinkedInUrl" class="input-dark" style="padding-left:35px;" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label style="font-size:12px; opacity:0.8; margin-bottom:5px;">Facebook Bağlantısı</label>
+                    <div style="position:relative;">
+                        <i class="fa-brands fa-facebook" style="position:absolute; left:12px; top:15px; color:var(--muted);"></i>
+                        <input asp-for="FacebookUrl" class="input-dark" style="padding-left:35px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end mb-5">
+            <button type="submit" class="btn-primary" style="padding: 12px 40px; font-size: 16px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
+                <i class="fa-solid fa-check me-2"></i> Değişiklikleri Kaydet
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function previewAvatar(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                document.getElementById('avatarPreview').src = reader.result;
+            };
+            if(event.target.files[0]){
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+    </script>
+}

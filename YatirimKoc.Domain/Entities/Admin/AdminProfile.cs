@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using YatirimKoc.Domain.Common;
-using YatirimKoc.Domain.Entities.Identity;
+﻿using YatirimKoc.Domain.Entities.Identity;
 
 namespace YatirimKoc.Domain.Entities.Admin;
 
@@ -16,14 +9,21 @@ public class AdminProfile
     // Identity User
     public Guid UserId { get; set; }
 
-    public string Title { get; set; } = null!; // Gayrimenkul Danışmanı
+    public string Title { get; set; } = null!; // Örn: Lüks Konut Uzmanı, Broker
     public string? Biography { get; set; }
 
     public string? Phone { get; set; }
     public string? ProfileImageUrl { get; set; }
 
-    public string? LicenseNumber { get; set; } // Yetki belgesi
+    public string? LicenseNumber { get; set; } // Taşınmaz Ticareti Yetki Belgesi
     public int? ExperienceYear { get; set; }
+
+    // Yeni Eklenen Kurumsal Alanlar
+    public string? Specialties { get; set; } // Örn: "Ticari, Arsa, Lüks Konut" (Virgülle ayrılmış veya JSON)
+    public string? SpokenLanguages { get; set; } // Örn: "İngilizce, Rusça"
+    public string? InstagramUrl { get; set; }
+    public string? LinkedInUrl { get; set; }
+    public string? FacebookUrl { get; set; }
 
     public bool IsActive { get; set; } = true;
 
@@ -32,5 +32,3 @@ public class AdminProfile
     // Navigation
     public User User { get; set; } = null!;
 }
-
-
