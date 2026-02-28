@@ -5,95 +5,190 @@
     Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
 }
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Mesaj Detayı</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="ContactMessages" asp-action="Index">İletişim Mesajları</a></li>
-        <li class="breadcrumb-item active">Detay</li>
-    </ol>
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+<div class="fade-in-up">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+        <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px; color:#fff;">Mesaj Detayı</h2>
+        <a asp-action="Index" class="btn-secondary" style="text-decoration:none;">
+            <i class="fas fa-arrow-left me-2"></i> Geri Dön
+        </a>
+    </div>
 
     <div class="row">
-        <div class="col-xl-8 col-lg-10">
-            <div class="card shadow-sm mb-4 border-0">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 font-weight-bold text-primary">@Model.Subject</h5>
+        <div class="col-xl-8 col-lg-10 mx-auto">
+            <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 30px; border-top: 5px solid var(--accent-1);">
+
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:25px;">
                     <div>
+                        <h4 style="color:#fff; font-weight:700; margin-bottom:5px;">@Model.Subject</h4>
+                        <div style="color:var(--muted); font-size:13px;">
+                            <i class="fas fa-calendar-alt me-1"></i> @Model.CreatedAt.ToString("dd MMMM yyyy, HH:mm")
+                        </div>
+                    </div>
+                    <div id="statusBadgeContainer">
                         @if (Model.Status == ContactMessageStatus.Replied)
                         {
-                            <span class="badge bg-success fs-6 px-3 py-2"><i class="fas fa-check-double"></i> Cevaplandı</span>
+                            <div class="status-pill status-active"><i class="fas fa-check-double"></i> Cevaplandı</div>
                         }
                         else
                         {
-                            <span class="badge bg-info text-dark fs-6 px-3 py-2"><i class="fas fa-envelope-open"></i> Okundu</span>
+                            <div class="status-pill" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
+                                <i class="fas fa-envelope-open"></i> Okundu
+                            </div>
                         }
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-3 pb-3 border-bottom">
-                        <div class="col-md-6">
-                            <p class="mb-1 text-muted small">Gönderen</p>
-                            <h6 class="mb-0 fw-bold"><i class="fas fa-user text-secondary me-2"></i>@Model.FullName</h6>
-                        </div>
-                        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                            <p class="mb-1 text-muted small">Tarih</p>
-                            <h6 class="mb-0"><i class="fas fa-calendar-alt text-secondary me-2"></i>@Model.CreatedAt.ToString("dd MMMM yyyy HH:mm")</h6>
-                        </div>
-                    </div>
 
-                    <div class="row mb-4 pb-3 border-bottom">
-                        <div class="col-md-6">
-                            <p class="mb-1 text-muted small">E-Posta Adresi</p>
-                            <h6><a href="mailto:@Model.Email" class="text-decoration-none"><i class="fas fa-envelope text-secondary me-2"></i>@Model.Email</a></h6>
+                <div style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:12px; padding:20px; margin-bottom:25px;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label style="color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px;">Gönderen</label>
+                            <div style="color:#fff; font-weight:600; font-size:16px; margin-top:5px;">
+                                <i class="fas fa-user text-secondary me-2"></i>@Model.FullName
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <p class="mb-1 text-muted small">Telefon Numarası</p>
-                            <h6>
+                            <label style="color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px;">İletişim</label>
+                            <div style="margin-top:5px; display:flex; flex-direction:column; gap:5px;">
+                                <a href="mailto:@Model.Email" style="color:var(--accent-2); text-decoration:none; font-weight:500;">
+                                    <i class="fas fa-envelope me-2"></i>@Model.Email
+                                </a>
                                 @if (!string.IsNullOrEmpty(Model.Phone))
                                 {
-                                    <a href="tel:@Model.Phone" class="text-decoration-none text-dark"><i class="fas fa-phone text-secondary me-2"></i>@Model.Phone</a>
+                                    <a href="tel:@Model.Phone" style="color:#cbd5e1; text-decoration:none; font-weight:500;">
+                                        <i class="fas fa-phone me-2"></i>@Model.Phone
+                                    </a>
                                 }
                                 else
                                 {
-                                    <span class="text-muted fst-italic">Belirtilmemiş</span>
+                                    <span style="color:var(--muted); font-size:13px; font-style:italic;">Telefon belirtilmemiş</span>
                                 }
-                            </h6>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="message-content bg-light p-4 rounded-3" style="min-height: 150px;">
-                        <p class="mb-1 text-muted small fw-bold text-uppercase">Mesaj İçeriği:</p>
-                        <p class="mb-0 fs-5" style="white-space: pre-line;">@Model.Message</p>
-                    </div>
                 </div>
-                <div class="card-footer bg-white py-3 d-flex justify-content-between">
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Listeye Dön
+
+                <div style="margin-bottom: 30px;">
+                    <label style="color:var(--accent-1); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:block;">
+                        Mesaj İçeriği
+                    </label>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:25px; color:#e2e8f0; font-size:15px; line-height:1.7; white-space:pre-wrap;">@Model.Message</div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:15px; border-top:1px solid var(--glass-border); padding-top:20px;">
+                    <a href="@Html.Raw("mailto:" + Model.Email + "?subject=" + Uri.EscapeDataString("RE: " + Model.Subject))" class="btn-secondary" style="text-decoration:none;">
+                        <i class="fas fa-reply me-2"></i> Mail ile Yanıtla
                     </a>
 
-                    <div class="d-flex gap-2">
-                        <a href="mailto:@Model.Email?subject=RE: @Model.Subject" class="btn btn-primary">
-                            <i class="fas fa-reply me-1"></i> E-Posta ile Yanıtla
-                        </a>
-
-                        @if (Model.Status != ContactMessageStatus.Replied)
-                        {
-                            <form asp-action="MarkAsReplied" asp-route-id="@Model.Id" method="post">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-check me-1"></i> Cevaplandı Olarak İşaretle
-                                </button>
-                            </form>
-                        }
-                    </div>
+                    @if (Model.Status != ContactMessageStatus.Replied)
+                    {
+                        <button type="button" class="btn-primary" onclick="markAsReplied('@Model.Id')" id="btnMarkReplied" style="background:var(--accent-1);">
+                            <i class="fas fa-check me-2"></i> Cevaplandı İşaretle
+                        </button>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div id="successModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-box glass-panel" style="width: 400px; padding: 40px 30px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); text-align:center; transform: scale(0.9); opacity: 0; transition: all 0.3s ease;">
+
+        <div style="width: 80px; height: 80px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #10b981; font-size: 35px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <h3 style="color:#fff; margin-bottom:10px; font-weight:700;">İşlem Başarılı!</h3>
+        <p style="color:var(--muted); font-size:15px; margin-bottom:0;" id="successModalText">Mesaj durumu güncellendi.</p>
+    </div>
+</div>
+
+<style>
+    .status-pill {
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+        .status-active::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+    }
+
+        .modal-overlay.active {
+            display: flex !important;
+        }
+
+            .modal-overlay.active .modal-box {
+                transform: scale(1) !important;
+                opacity: 1 !important;
+            }
+</style>
+
+@section Scripts {
+    <script>
+        function markAsReplied(id) {
+            const btn = document.getElementById('btnMarkReplied');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> İşleniyor...';
+            btn.disabled = true;
+
+            $.ajax({
+                url: '/Admin/ContactMessages/MarkAsReplied',
+                type: 'POST',
+                data: { id: id },
+                success: function (result) {
+                    if (result.success) {
+                        // İşlem başarılı, butonu gizle ve badge'i değiştir
+                        btn.style.display = 'none';
+                        document.getElementById('statusBadgeContainer').innerHTML = '<div class="status-pill status-active"><i class="fas fa-check-double"></i> Cevaplandı</div>';
+
+                        // Başarı modalını göster
+                        const sModal = document.getElementById('successModal');
+                        sModal.style.display = 'flex';
+                        setTimeout(() => sModal.classList.add('active'), 10);
+
+                        // 2 saniye sonra modalı kapat
+                        setTimeout(() => {
+                            sModal.classList.remove('active');
+                            setTimeout(() => sModal.style.display = 'none', 300);
+                        }, 2000);
+
+                    } else {
+                        alert(result.message);
+                        btn.innerHTML = '<i class="fas fa-check me-2"></i> Cevaplandı İşaretle';
+                        btn.disabled = false;
+                    }
+                },
+                error: function () {
+                    alert('İşlem sırasında sunucu hatası oluştu.');
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i> Cevaplandı İşaretle';
+                    btn.disabled = false;
+                }
+            });
+        }
+    </script>
+}

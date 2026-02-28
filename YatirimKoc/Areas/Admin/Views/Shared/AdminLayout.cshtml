@@ -94,6 +94,16 @@
                             <li><a asp-area="Admin" asp-controller="ContactMessages" asp-action="Index">Tüm Mesajlar</a></li>
                         </ul>
                     </li>
+
+                    <li class="has-children @(currentController.ToLower() == "reservations" ? "expanded active" : "")">
+                        <a href="#">
+                            <span class="icon"><i class="fa-solid fa-calendar"></i></span>
+                            <span class="label">Rezervasyonlar</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a asp-area="Admin" asp-controller="Reservations" asp-action="Index">Tüm Rezervasyonlar</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </nav>

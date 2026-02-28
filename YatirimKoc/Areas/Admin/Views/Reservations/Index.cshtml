@@ -1,8 +1,8 @@
 ﻿@using YatirimKoc.Domain.Enums
 @using YatirimKoc.Application.Common.Models
-@model PaginatedList<YatirimKoc.Application.Features.ContactMessages.Dtos.ContactMessageDto>
+@model PaginatedList<YatirimKoc.Application.Features.Reservations.Dtos.ReservationDto>
 @{
-    ViewData["Title"] = "İletişim Mesajları";
+    ViewData["Title"] = "Randevu Yönetimi";
     Layout = "~/Areas/Admin/Views/Shared/AdminLayout.cshtml";
 }
 
@@ -10,8 +10,8 @@
     <div class="glass-panel" style="border-radius: var(--radius-lg); padding: 25px; margin-bottom: 30px; border-left: 5px solid var(--accent-1);">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
             <div>
-                <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px;">Gelen Mesajlar</h2>
-                <p style="color: var(--muted); margin: 5px 0 0 0;">Toplam @Model.TotalCount mesaj listeleniyor.</p>
+                <h2 style="margin:0; font-weight:800; letter-spacing:-0.5px;">Randevu Talepleri</h2>
+                <p style="color: var(--muted); margin: 5px 0 0 0;">Toplam @Model.TotalCount randevu listeleniyor.</p>
             </div>
         </div>
 
@@ -19,17 +19,18 @@
 
         <form method="get" asp-action="Index" class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
             <div class="form-group">
-                <label style="font-size:12px; opacity:0.7;">Kişi, Konu veya E-Posta Ara</label>
+                <label style="font-size:12px; opacity:0.7;">İsim veya E-Posta Ara</label>
                 <input type="text" name="searchTerm" value="@ViewData["CurrentSearch"]" class="input-dark" placeholder="Kelime yazın..." />
             </div>
 
             <div class="form-group">
-                <label style="font-size:12px; opacity:0.7;">Mesaj Durumu</label>
+                <label style="font-size:12px; opacity:0.7;">Durum Filtresi</label>
                 <select name="statusId" class="input-dark">
                     <option value="">Tümü</option>
-                    <option value="1" selected="@(ViewData["CurrentStatus"]?.ToString() == "1")">Bekliyor (Okunmadı)</option>
-                    <option value="2" selected="@(ViewData["CurrentStatus"]?.ToString() == "2")">Okundu</option>
-                    <option value="3" selected="@(ViewData["CurrentStatus"]?.ToString() == "3")">Cevaplandı</option>
+                    <option value="1" selected="@(ViewData["CurrentStatus"]?.ToString() == "1")">Bekliyor</option>
+                    <option value="2" selected="@(ViewData["CurrentStatus"]?.ToString() == "2")">Onaylandı</option>
+                    <option value="3" selected="@(ViewData["CurrentStatus"]?.ToString() == "3")">Reddedildi</option>
+                    <option value="4" selected="@(ViewData["CurrentStatus"]?.ToString() == "4")">İptal Edildi</option>
                 </select>
             </div>
 
@@ -50,9 +51,9 @@
         <table style="width: 100%; border-collapse: collapse; min-width:1000px;">
             <thead>
                 <tr style="color: var(--muted); font-size:12px; text-transform:uppercase; border-bottom: 1px solid var(--glass-border);">
-                    <th style="padding: 20px; text-align:left;">Tarih</th>
-                    <th style="padding: 20px; text-align:left;">Gönderen Bilgisi</th>
-                    <th style="padding: 20px; text-align:left;">Konu</th>
+                    <th style="padding: 20px; text-align:left;">Danışan Bilgisi</th>
+                    <th style="padding: 20px; text-align:left;">Randevu Tarihi & Saati</th>
+                    <th style="padding: 20px; text-align:left;">Talep Tarihi</th>
                     <th style="padding: 20px; text-align:left;">Durum</th>
                     <th style="padding: 20px; text-align:right;">İşlemler</th>
                 </tr>
@@ -61,44 +62,45 @@
                 @foreach (var item in Model.Items)
                 {
                     <tr class="table-row-hover" style="border-bottom: 1px solid rgba(255,255,255,0.03);" id="row-@item.Id">
-                        <td style="padding: 15px 20px; color:var(--muted); font-size:13px;">
-                            <i class="fa-regular fa-calendar-days" style="margin-right:5px; color:var(--accent-1);"></i>
-                            @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
-                        </td>
                         <td style="padding: 15px 20px;">
                             <div style="font-weight:600; font-size:15px; color:#fff; margin-bottom:5px;">@item.FullName</div>
                             <div style="font-size:12px; color:var(--muted);">
                                 <i class="fa-regular fa-envelope" style="margin-right:3px;"></i> @item.Email
                             </div>
                         </td>
-                        <td style="padding: 15px 20px; font-weight:500; color:#cbd5e1;">
-                            @item.Subject
+                        <td style="padding: 15px 20px; color:#cbd5e1; font-size:14px; font-weight:600;">
+                            <i class="fa-regular fa-calendar-check" style="margin-right:5px; color:var(--accent-2);"></i>
+                            @item.ReservationDate.ToString("dd.MM.yyyy") <span style="color:var(--muted); margin-left:5px;">| @item.TimeSlot</span>
+                        </td>
+                        <td style="padding: 15px 20px; color:var(--muted); font-size:13px;">
+                            @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                         </td>
                         <td style="padding: 15px 20px;">
                             @switch (item.Status)
                             {
-                                case ContactMessageStatus.Pending:
-                                    <div class="status-pill status-draft"><i class="fas fa-clock"></i> Bekliyor</div>
+                                case ReservationStatus.Pending:
+                                    <div class="status-pill status-draft"><i class="fas fa-hourglass-half"></i> Bekliyor</div>
                                     break;
-                                case ContactMessageStatus.Read:
-                                    <div class="status-pill" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
-                                        <i class="fas fa-envelope-open"></i> Okundu
-                                    </div>
+                                case ReservationStatus.Approved:
+                                    <div class="status-pill status-active"><i class="fas fa-check-circle"></i> Onaylandı</div>
                                     break;
-                                case ContactMessageStatus.Replied:
-                                    <div class="status-pill status-active"><i class="fas fa-check-double"></i> Cevaplandı</div>
+                                case ReservationStatus.Rejected:
+                                    <div class="status-pill" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="fas fa-times-circle"></i> Reddedildi</div>
+                                    break;
+                                case ReservationStatus.Cancelled:
+                                    <div class="status-pill" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8;"><i class="fas fa-ban"></i> İptal Edildi</div>
                                     break;
                             }
                         </td>
                         <td style="padding: 15px 20px; text-align:right;">
                             <div style="display:flex; justify-content:flex-end; gap:10px;">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="action-icon" title="Mesajı İncele" style="color:var(--accent-1);">
-                                    <i class="fa-regular fa-eye"></i>
+                                <a asp-action="Details" asp-route-id="@item.Id" class="action-icon" title="Detayı İncele" style="color:var(--accent-1);">
+                                    <i class="fa-solid fa-expand"></i>
                                 </a>
                                 <button type="button" class="action-icon btn-delete-trigger"
                                         style="color:#ef4444; border:none; cursor:pointer;"
                                         title="Sil"
-                                        onclick="openDeleteModal('@item.Id', '@Html.Raw(item.FullName.Replace("'", "\\'"))', '@Html.Raw(item.Subject.Replace("'", "\\'"))')">
+                                        onclick="openDeleteModal('@item.Id', '@Html.Raw(item.FullName.Replace("'", "\\'"))', '@item.ReservationDate.ToString("dd.MM.yyyy") - @item.TimeSlot')">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -110,7 +112,7 @@
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; padding:0 10px;">
             <div style="color:var(--muted); font-size:14px;">
-                Toplam <b>@Model.TotalCount</b> mesajdan @((Model.PageNumber - 1) * 10 + 1) - @Math.Min(Model.PageNumber * 10, Model.TotalCount) arası gösteriliyor.
+                Toplam <b>@Model.TotalCount</b> randevudan @((Model.PageNumber - 1) * 10 + 1) - @Math.Min(Model.PageNumber * 10, Model.TotalCount) arası gösteriliyor.
             </div>
 
             <div style="display:flex; gap:10px;">
@@ -147,15 +149,15 @@
     <div class="modal-box glass-panel" style="width: 450px; padding: 30px; border-radius: 20px; border: 1px solid rgba(239, 68, 68, 0.3); text-align:center; transform: scale(0.9); opacity: 0; transition: all 0.3s ease;">
 
         <div style="width: 70px; height: 70px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #ef4444; font-size: 30px; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);">
-            <i class="fa-solid fa-envelope-circle-xmark"></i>
+            <i class="fa-solid fa-calendar-xmark"></i>
         </div>
 
-        <h3 style="color:#fff; margin-bottom:10px; font-weight:700;">Mesajı Silmek Üzeresiniz!</h3>
-        <p style="color:var(--muted); font-size:14px; margin-bottom:20px;">Bu işlem geri alınamaz. İletişim mesajı veritabanından tamamen silinecektir.</p>
+        <h3 style="color:#fff; margin-bottom:10px; font-weight:700;">Randevuyu Silmek Üzeresiniz!</h3>
+        <p style="color:var(--muted); font-size:14px; margin-bottom:20px;">Bu işlem geri alınamaz. Randevu talebi veritabanından tamamen silinecektir.</p>
 
         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; margin-bottom: 25px; text-align: left;">
             <div id="modalDeleteTitle" style="color: #fff; font-weight: 600; font-size: 15px; margin-bottom: 5px;"></div>
-            <div id="modalDeleteSubject" style="color: var(--accent-2); font-size: 13px;"></div>
+            <div id="modalDeleteDate" style="color: var(--accent-2); font-size: 13px;"></div>
         </div>
 
         <div id="deleteProgressContainer" style="display:none; margin-bottom: 25px;">
@@ -172,7 +174,7 @@
             </button>
         </div>
 
-        <input type="hidden" id="deleteMessageId" />
+        <input type="hidden" id="deleteReservationId" />
     </div>
 </div>
 
@@ -295,16 +297,16 @@
         const deleteModal = document.getElementById('deleteModal');
         const modalBox = deleteModal.querySelector('.modal-box');
         const titleEl = document.getElementById('modalDeleteTitle');
-        const subjectEl = document.getElementById('modalDeleteSubject');
-        const idInput = document.getElementById('deleteMessageId');
+        const dateEl = document.getElementById('modalDeleteDate');
+        const idInput = document.getElementById('deleteReservationId');
         const progressContainer = document.getElementById('deleteProgressContainer');
         const progressBar = document.getElementById('deleteProgressBar');
         const buttonsContainer = document.getElementById('deleteModalButtons');
 
-        function openDeleteModal(id, fullName, subject) {
+        function openDeleteModal(id, fullName, dateTime) {
             idInput.value = id;
             titleEl.innerHTML = `<i class="fa-solid fa-user me-2"></i> ${fullName}`;
-            subjectEl.innerHTML = `Konu: ${subject}`;
+            dateEl.innerHTML = `<i class="fa-regular fa-clock me-1"></i> ${dateTime}`;
 
             progressContainer.style.display = 'none';
             progressBar.style.width = '0%';
@@ -336,7 +338,7 @@
             }, 300);
 
             $.ajax({
-                url: '/Admin/ContactMessages/Delete',
+                url: '/Admin/Reservations/Delete',
                 type: 'POST',
                 data: { id: id },
                 success: function (result) {

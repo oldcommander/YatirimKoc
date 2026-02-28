@@ -2,42 +2,39 @@
 using Microsoft.EntityFrameworkCore;
 using YatirimKoc.Application.Abstractions.Persistence;
 using YatirimKoc.Application.Common.Models;
-using YatirimKoc.Application.Features.ContactMessages.Dtos;
+using YatirimKoc.Application.Features.Reservations.Dtos;
 using YatirimKoc.Domain.Enums;
 
-namespace YatirimKoc.Application.Features.ContactMessages.Queries;
+namespace YatirimKoc.Application.Features.Reservations.Queries;
 
-public class GetAllContactMessagesQuery : IRequest<PaginatedList<ContactMessageDto>>
+public class GetAllReservationsQuery : IRequest<PaginatedList<ReservationDto>>
 {
     public string? SearchTerm { get; set; }
-    public ContactMessageStatus? Status { get; set; }
+    public ReservationStatus? Status { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }
 
-public class GetAllContactMessagesQueryHandler : IRequestHandler<GetAllContactMessagesQuery, PaginatedList<ContactMessageDto>>
+public class GetAllReservationsQueryHandler : IRequestHandler<GetAllReservationsQuery, PaginatedList<ReservationDto>>
 {
     private readonly IApplicationDbContext _context;
 
-    public GetAllContactMessagesQueryHandler(IApplicationDbContext context)
+    public GetAllReservationsQueryHandler(IApplicationDbContext context)
     {
         _context = context;
     }
 
-    public async Task<PaginatedList<ContactMessageDto>> Handle(GetAllContactMessagesQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedList<ReservationDto>> Handle(GetAllReservationsQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.ContactMessages.AsNoTracking().AsQueryable();
+        var query = _context.Reservations.AsNoTracking().AsQueryable();
 
-        // Arama Filtresi (İsim, Konu veya E-Posta içinde arar)
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var search = request.SearchTerm.ToLower();
             query = query.Where(x => x.FullName.ToLower().Contains(search) ||
-                                     x.Subject.ToLower().Contains(search) ||
                                      x.Email.ToLower().Contains(search));
         }
 
-        // Statü Filtresi
         if (request.Status.HasValue)
         {
             query = query.Where(x => x.Status == request.Status.Value);
@@ -46,20 +43,22 @@ public class GetAllContactMessagesQueryHandler : IRequestHandler<GetAllContactMe
         var count = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderByDescending(x => x.ReservationDate)
+            .ThenBy(x => x.TimeSlot)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(x => new ContactMessageDto
+            .Select(x => new ReservationDto
             {
                 Id = x.Id,
                 FullName = x.FullName,
                 Email = x.Email,
                 Phone = x.Phone,
-                Subject = x.Subject,
+                ReservationDate = x.ReservationDate,
+                TimeSlot = x.TimeSlot,
                 Status = x.Status,
                 CreatedAt = x.CreatedAt
             }).ToListAsync(cancellationToken);
 
-        return new PaginatedList<ContactMessageDto>(items, count, request.PageNumber, request.PageSize);
+        return new PaginatedList<ReservationDto>(items, count, request.PageNumber, request.PageSize);
     }
 }

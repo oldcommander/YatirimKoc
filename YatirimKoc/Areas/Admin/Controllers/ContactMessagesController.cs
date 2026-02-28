@@ -8,7 +8,7 @@ using YatirimKoc.Domain.Enums;
 namespace YatirimKoc.Areas.Admin.Controllers;
 
 [Area("Admin")]
-// [Authorize(Roles = "SuperAdmin,Admin")] // Projenizdeki auth yapısına göre aktif edebilirsiniz.
+// [Authorize(Roles = "SuperAdmin,Admin")]
 public class ContactMessagesController : Controller
 {
     private readonly IMediator _mediator;
@@ -18,9 +18,19 @@ public class ContactMessagesController : Controller
         _mediator = mediator;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchTerm, ContactMessageStatus? statusId, int pageNumber = 1)
     {
-        var messages = await _mediator.Send(new GetAllContactMessagesQuery());
+        ViewData["CurrentSearch"] = searchTerm;
+        ViewData["CurrentStatus"] = statusId;
+
+        var query = new GetAllContactMessagesQuery
+        {
+            SearchTerm = searchTerm,
+            Status = statusId,
+            PageNumber = pageNumber
+        };
+
+        var messages = await _mediator.Send(query);
         return View(messages);
     }
 
@@ -29,35 +39,26 @@ public class ContactMessagesController : Controller
         var message = await _mediator.Send(new GetContactMessageDetailQuery(id));
         if (message == null) return NotFound();
 
-        // Mesaj detayına tıklandığında statüsü Pending ise otomatik Read (Okundu) yapalım.
         if (message.Status == ContactMessageStatus.Pending)
         {
             await _mediator.Send(new UpdateContactMessageStatusCommand { Id = id, NewStatus = ContactMessageStatus.Read });
-            message.Status = ContactMessageStatus.Read; // View için modeli güncelle
+            message.Status = ContactMessageStatus.Read;
         }
 
         return View(message);
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAsReplied(Guid id)
     {
-        await _mediator.Send(new UpdateContactMessageStatusCommand { Id = id, NewStatus = ContactMessageStatus.Replied });
-        TempData["SuccessMessage"] = "Mesaj durumu başarıyla 'Cevaplandı' olarak güncellendi.";
-        return RedirectToAction(nameof(Details), new { id });
+        var result = await _mediator.Send(new UpdateContactMessageStatusCommand { Id = id, NewStatus = ContactMessageStatus.Replied });
+        return Json(new { success = result, message = result ? "Mesaj başarıyla cevaplandı olarak işaretlendi." : "İşlem sırasında bir hata oluştu." });
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteContactMessageCommand(id));
-        if (result)
-            TempData["SuccessMessage"] = "Mesaj başarıyla silindi.";
-        else
-            TempData["ErrorMessage"] = "Mesaj silinirken bir hata oluştu.";
-
-        return RedirectToAction(nameof(Index));
+        return Json(new { success = result, message = result ? "Mesaj başarıyla silindi." : "Mesaj silinirken bir hata oluştu." });
     }
 }
